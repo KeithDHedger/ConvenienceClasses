@@ -202,7 +202,7 @@ AboutBoxClass::AboutBoxClass(QWidget *window,QString pixpath)
 	vlayout->addWidget(this->hpLabel);
 //credits
 	this->creditsButton=new QPushButton("&Credits");
-	this->creditsButton->setIcon(QIcon::fromTheme("help-about"));
+	this->creditsButton->setIcon(QIcon::fromTheme("text-x-credits"));
 	QObject::connect(this->creditsButton,&QPushButton::clicked,[this]()
 		{
 			this->showCredits();
