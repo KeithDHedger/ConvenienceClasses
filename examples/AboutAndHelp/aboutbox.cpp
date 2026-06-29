@@ -98,7 +98,7 @@ QMenu* setHelpMenu(QMenuBar *menubar)
 				{
 					case ABOUTITEM:
 						{
-							AboutBoxClass	*about=new AboutBoxClass(qApp->activeWindow(),QString("%1/pixmaps/AspellGUI.png").arg(getenv("PWD")));
+							AboutBoxClass	*about=new AboutBoxClass(qApp->activeWindow(),QString("%1/pixmaps/About.png").arg(getenv("PWD")));
 							QFile			file(QString("%1/docs/gpl-3.0.txt").arg(DATADIR));
 							if(file.open(QIODevice::ReadOnly | QIODevice::Text))
 								{
