@@ -1,2 +1,3 @@
 # ConvenienceClasses
-These are private classes for my apps, but may be used 'as is'
+These are private classes for my apps, but may be used 'as is'  
+See the examples folder.
