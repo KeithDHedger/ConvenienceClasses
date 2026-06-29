@@ -1,0 +1,36 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  </head>
+  <body>
+	Adds a menu to allow you to search for selected text with various API actions.<br>
+	The API menu is available via the 'Navigation' menu or the context menu, if there is no selected text the 'Find API' menu will be greyed out in the 'Navigation' menu and not shown in the conext menu.<br>
+	Select API search:<br>
+	<img moz-do-not-send="true" src="selectapi.png" alt=""><br>
+    Then select in the doc viewer:<br>
+    <img moz-do-not-send="true" src="output.png" alt=""><br><br>
+    <img moz-do-not-send="true" src="gotapi.png" alt=""><br>
+    Easy Peasy!<br><br>
+    You can also do a "Search All" that will look for API's using all search actions:<br>
+	<img moz-do-not-send="true" src="gotallapi.png" alt=""><br>
+	<br>
+	You can also set a custom command from the plugin settings dialog like so:<br>
+	<img moz-do-not-send="true" src="setcc.png" alt=""><br>
+	This command will be run asynchronously after replacing "%p" with the currently selected text, no output will be shown in the docviewer window..<br>
+	If you don't want a custom command to apear in the "Find API" menu, leave blank.<br>
+	<br>
+	The format of the *.info file is for example:<br>
+	Search In Gtk3 API's<br>
+	./searchgtk3api<br>
+	show<br>
+	inall<br>
+	<br>
+	Where:
+	'Search In Gtk3 API's' is the text shown in the 'Find API' menu.<br>
+	'./searchgtk3api' is the command to run ( relative to the DocumentationPlugin/actions folder ).<br>
+	'show' show this item in the 'Find API' menu ( or 'noshow' to not show ).<br>
+	'inall' include this search when using 'Run All Searches' ( or notinall to not include this search ).<br>
+	<br>More info to come ...<br>
+  </body>
+</html>
