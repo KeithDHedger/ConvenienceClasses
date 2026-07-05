@@ -46,48 +46,29 @@ EOF
 			;;
 		6)
 			unset QT_QPA_PLATFORMTHEME
-			VALGRIND="valgrind --leak-check=full --track-origins=yes --suppressions=./ignorelibleaks "
+			VALGRIND="valgrind --leak-check=full --suppressions=./ignorelibleaks -s "
 			;;
 	esac
 fi
 
-g++ -g -Wall -I${PWD} -I${PWD}/../../src -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) -fPIC ${PWD}/../../src/prefsClass.cpp "$0"||exit 1
+g++ -g -Wall -I${PWD} -I${PWD}/../../src -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) -fPIC "$0"||exit 1
 $VALGRIND ./a.out "$@"
 retval=$?
-#rm ./a.out
+rm ./a.out
 exit $retval
 
 #endif
 
+#include <QtWidgets>
+
 #include "globals.h"
 
-#define PACKAGE_NAME "Qt6-Window.cpp"
+#define PACKAGE_NAME "Spell Check Example"
 
 #define QUITITEM 500
 #define ABOUTITEM 600
 #define ABOUTQTITEM 601
 #define HELPITEM 602
-
-void doPrefs(void)
-{
-	prefsClass	newprefs;
-	QStringList  prefsdata;;
-	QSize		sze;
-	QFile		file(QString("%1/exampleprefs.data").arg(getenv("PWD")));
-
-	if(file.open(QIODevice::ReadOnly | QIODevice::Text))
-		{
-			QString data="";
-			QTextStream in(&file);
-			data=in.readAll();
-			file.close();
-			prefsdata=data.split("\n");
-			newprefs.paged=true;
-			newprefs.createDialog(PACKAGE_STRING,prefsdata);
-			if(newprefs.dialogPrefs.valid==true)
-				newprefs.printCurrentPrefs();
-		}
-}
 
 QMenu* setHelpMenu(QMenuBar *menubar)
 {
@@ -163,96 +144,35 @@ QMenu* setFileMenu(QMenuBar *menubar)
 			qDebug()<<action->text()<<action->data().toInt();
 			if(action->data().toInt()==QUITITEM)
 				qApp->exit(0);
-			else
-				{
-					switch(action->data().toInt())
-						{
-							case 100:
-								{
-									QString filename=QFileDialog::getOpenFileName(nullptr,"Select File","data");
-									if(filename.isEmpty()==false)
-										{
-											qDebug()<<filename;
-											//this->dialogPrefs.fileBoxes[filenum]->setText(filename);
-											//this->dialogPrefs.fileBoxes[filenum]->setCursorPosition(0);
-										}
-								}
-								break;
-							case 101:
-								break;
-							case 102:
-								qDebug()<<"Do prefs ...";
-								doPrefs();
-								break;
-							default:
-								break;
-						}
-				}
-				
 		});
 	return(menu);
 }
 
 int main(int argc, char **argv)
 {
-	QApplication app(argc,argv);
+	QApplication app(argc, argv);
 
-	QSettings	defaults("KDHedger",PACKAGE);
 	QMainWindow	*mainwindow=new QMainWindow;
 	QWidget		*widg=new QWidget(mainwindow);
-	QLabel		*label=new QLabel(widg);
+	QTextEdit	*te=new QTextEdit(widg);
 	QVBoxLayout	*layout=new QVBoxLayout(widg);
 	QMenuBar		*menuBar=new QMenuBar(mainwindow);
-
-	app.setApplicationName(PACKAGE);
-
-	QString realDataDir=QString("%1%2").arg(getenv("APPDIR")).arg(DATADIR);
+	QString		realDataDir=QString("%1%2").arg(getenv("APPDIR")).arg(DATADIR);
 
 	QIcon::setThemeSearchPaths(QStringList()<<QString("%1/usr/share/icons").arg(getenv("APPDIR"))<<QString("/usr/share/icons")<<QString("%1/.icons").arg(getenv("HOME")) <<QString("%1/icons").arg(realDataDir) );
 	QIcon::setFallbackSearchPaths(QStringList()<<QString("%1/usr/share/icons").arg(getenv("APPDIR"))<<QString("/usr/share/icons")<<QString("%1/.icons").arg(getenv("HOME"))  <<QString("%1/icons").arg(realDataDir));
 
-	option	long_options[]=
+	QFile		file(QString("%1/../../LICENSE").arg(getenv("PWD")));
+	if(file.open(QIODevice::ReadOnly | QIODevice::Text))
 		{
-			{"showsyspage",no_argument,NULL,'p'},
-			{"opensyspage",required_argument,NULL,'s'},
-			{"testoptional",optional_argument,NULL,'t'},
-			{0,0,0,0}
-		};
-
-//check cli args
-{
-	prefsClass	newprefs;
-	bool parse;
-
-	parse=newprefs.doCliArgs(argc,argv,long_options);
-	if(parse==false)
-		{
-			qDebug()<<"put in some help";
-			exit(0);
+			QString data="";
+			QTextStream in(&file);
+			data=in.readAll();
+			file.close();
+			te->setPlainText(data);
 		}
 
-	if(newprefs.prefsData.contains(newprefs.hashFromKey("showsyspage")))
-		{
-			qDebug()<<"showsyspage"<<newprefs.getPrefValue("showsyspage").toBool();
-		}
-	if(newprefs.prefsData.contains(newprefs.hashFromKey("opensyspage")))
-		{
-			qDebug()<<"opensyspage"<<newprefs.getPrefValue("opensyspage");
-		}
-	if(newprefs.prefsData.contains(newprefs.hashFromKey("testoptional")))
-		{
-			qDebug()<<"testoptional"<<newprefs.getPrefValue("testoptional");
-		}
-	if(newprefs.extraCliArgs.isEmpty()==false)
-		qDebug()<<"xtra args"<<newprefs.extraCliArgs;
-}
-	if(defaults.contains("geometry"))
-		mainwindow->restoreGeometry(defaults.value("geometry").toByteArray());
-	else
-		mainwindow->setGeometry(100,100,800,600);
-
-	label->setText("Put somthing here ...");
-	layout->addWidget(label);
+	layout->addWidget(te);
 	layout->setAlignment(Qt::AlignCenter);
 
 	widg->setLayout(layout);
@@ -264,32 +184,12 @@ int main(int argc, char **argv)
 	QMenu		*helpMenu=setHelpMenu(menuBar);
 
 	mainwindow->setMenuBar(menuBar);
+	mainwindow->setGeometry(1322,331,535,505);
+
 	mainwindow->show();
 
 	app.exec();
-	defaults.setValue("geometry",mainwindow->saveGeometry());
-
 	delete mainwindow;
-
-	{
-		prefsClass	newprefs("AAATESTCODESET");
-
-		QRect r(10, 20, 30, 40);
-		newprefs.prefsData.clear();
-		newprefs.prefsNames.clear();
-		newprefs.addPref("qpx100",QVariant::fromValue(r));
-		newprefs.addPref("some data/qpx200",QVariant::fromValue(QString("a string")));
-		newprefs.addPref("myfont",QVariant::fromValue(QFont("Sans Serif,9,-1,5,50,0,0,0,0,0")));
-		newprefs.addPref("my bool",QVariant::fromValue(true));
-
-		newprefs.writeManualPrefs();
-
-		qDebug()<<newprefs.getPrefValue("some data/qpx200");
-		newprefs.setPrefValue("some data/qpx200",QVariant::fromValue(QString("another string")));
-		qDebug()<<newprefs.getPrefValue("some data/qpx200");
-		qDebug()<<newprefs.getSavedPrefValue("some data/qpx200");
-	}
-
 	return(0);
 }
 

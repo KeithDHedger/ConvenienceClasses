@@ -1,24 +1,5 @@
-/*
- *
- * ©K. D. Hedger. Mon 29 Jun 13:58:39 BST 2026 keithdhedger@gmail.com
 
- * This file (prefsClass.cpp) is part of ConvenienceClasses.
-
- * ConvenienceClasses is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
-
- * ConvenienceClasses is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
- * You should have received a copy of the GNU General Public License
- * along with ConvenienceClasses.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-#include "prefsClass.h"
+#include "globals.h"
 
 /**
 * this->dialogPrefsClass class destroy.
@@ -74,7 +55,7 @@ QString prefsClass::bestFontColour(QString colour)
 
 unsigned long prefsClass::hashFromKey(QString key)
 {
-	QString		str=key.replace(" ","_");
+	QString		str=key.replace(" ","_").toLower();
 	unsigned		long hash=0;
 
 	for(int i=0;i<str.length();i++)
@@ -114,15 +95,34 @@ void prefsClass::writeManualPrefs(void)
 	QSettings	defaults("KDHedger",this->prefsFileName);
 
 	for(int j=0;j<this->prefsData.size();j++)
-		{
-			defaults.setValue(this->prefsNames.at(j),this->prefsData.value(this->hashFromKey(this->prefsNames.at(j))));
-		}
+		defaults.setValue(this->prefsNames.at(j),this->prefsData.value(this->hashFromKey(this->prefsNames.at(j))));
+}
+
+void prefsClass::writeSinglePref(QString name)
+{
+	QSettings	defaults("KDHedger",this->prefsFileName);
+
+	if(this->prefsData.contains(this->hashFromKey(name)))
+		defaults.setValue(this->fixPrefName(name),this->prefsData.value(this->hashFromKey(name)));
+}
+
+QString prefsClass::fixPrefName(QString name)
+{
+	return(name.replace(" ","_").toLower());
 }
 
 void prefsClass::addPref(QString name,QVariant qvar)
 {
 	this->prefsData[this->hashFromKey(name)]=qvar;
-	this->prefsNames<<name.replace(" ","_");
+	this->prefsNames<<this->fixPrefName(name);
+}
+
+void prefsClass::appendStrPref(QString name,QString str)
+{
+	if(this->prefsData.contains(this->hashFromKey(name)))
+		this->setPrefValue(name,this->getPrefValue(name).toStringList()<<str);
+	else
+		this->addPref(name,str);
 }
 
 void prefsClass::setPrefValue(QString name,QVariant val)
@@ -138,12 +138,30 @@ QVariant prefsClass::getPrefValue(QString name)
 QVariant prefsClass::getSavedPrefValue(QString name)
 {
 	QSettings	defaults("KDHedger",this->prefsFileName);
-	QString		str=name.replace(" ","_");
+	QString		str=fixPrefName(name);
 
 	if(defaults.contains(str))
 		return(defaults.value(str));
 
 	return(QVariant());
+}
+
+QVariant prefsClass::addPrefSavedValue(QString name,QVariant qvar)
+{
+	QVariant var=this->getSavedPrefValue(name);
+	QVariant rvar;
+
+	if(var.isValid())
+		{
+			this->addPref(name,var);
+			rvar=var;
+		}
+	else
+		{
+			this->addPref(name,qvar);
+			rvar=qvar;
+		}
+	return(rvar);
 }
 
 void prefsClass::printCurrentPrefs()
@@ -671,13 +689,15 @@ bool prefsClass::doCliArgs(int argc,char **argv,option longoptions[])
 					if(longoptions[ocnt].val==c)
 						{
 							if(optarg!=NULL)
-								this->addPref(longoptions[ocnt].name,QVariant::fromValue(QString(optarg)));
+								{
+									this->appendStrPref(longoptions[ocnt].name,QString(optarg));
+								}
 							else
 								{
 									if(longoptions[ocnt].has_arg==optional_argument)
-										this->addPref(longoptions[ocnt].name,QVariant::fromValue(QString("")));
+										this->appendStrPref(longoptions[ocnt].name,QString(optarg));
 									else
-										this->addPref(longoptions[ocnt].name,QVariant::fromValue(true));
+										this->appendStrPref(longoptions[ocnt].name,"");
 								}
 						}
 					ocnt++;

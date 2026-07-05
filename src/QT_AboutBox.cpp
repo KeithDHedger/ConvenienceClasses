@@ -1,22 +1,3 @@
-/*
- *
- * ©K. D. Hedger. Mon 29 Jun 13:57:31 BST 2026 keithdhedger@gmail.com
-
- * This file (QT_AboutBox.cpp) is part of ConvenienceClasses.
-
- * ConvenienceClasses is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
-
- * ConvenienceClasses is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
- * You should have received a copy of the GNU General Public License
- * along with ConvenienceClasses.  If not, see <http://www.gnu.org/licenses/>.
-*/
 
 #include "QT_AboutBox.h"
 
@@ -91,7 +72,6 @@ void AboutBoxClass::killLicenceBox(void)
 void AboutBoxClass::killAboutBox(void)
 {
 	this->aboutDialog->close();
-	delete this;
 }
 
 void AboutBoxClass::showLicence(void)
@@ -152,7 +132,12 @@ void AboutBoxClass::setBodyText(QString bodystr)
 
 void AboutBoxClass::setAppName(void)
 {
-	this->appNameLabel->setText(QString("<font size=\"5\"><b>%1</b></font>").arg(qApp->applicationDisplayName()));
+	QString xtradata="";
+
+	if(qApp->applicationVersion().isEmpty()==false)
+		xtradata=QString("<br><font size=\"3\">Version %1</font>").arg(qApp->applicationVersion());
+	
+	this->appNameLabel->setText(QString("<font size=\"5\"><b>%1</b></font>%2").arg(qApp->applicationDisplayName()).arg(xtradata));
 }
 
 AboutBoxClass::AboutBoxClass(QWidget *window,QString pixpath)
@@ -200,6 +185,7 @@ AboutBoxClass::AboutBoxClass(QWidget *window,QString pixpath)
 	this->hpLabel->setOpenExternalLinks(true);
 	this->hpLabel->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
 	vlayout->addWidget(this->hpLabel);
+
 //credits
 	this->creditsButton=new QPushButton("&Credits");
 	this->creditsButton->setIcon(QIcon::fromTheme("text-x-credits"));
