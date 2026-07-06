@@ -54,7 +54,7 @@ fi
 g++ -Wall -g -I${PWD} -I${PWD}/../../src -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) -fPIC ${PWD}/../../src/QT_AboutBox.cpp "$0"||exit 1
 $VALGRIND ./a.out "$@"
 retval=$?
-rm ./a.out
+#rm ./a.out
 exit $retval
 
 #endif

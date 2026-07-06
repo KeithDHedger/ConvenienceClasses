@@ -51,24 +51,45 @@ EOF
 	esac
 fi
 
-g++ -g -Wall -I${PWD} -I${PWD}/../../src -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) -fPIC "$0"||exit 1
+g++ -g -Wall -I${PWD} -I${PWD}/../../src -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) ${PWD}/../../src/QT_SpellCheck.cpp -fPIC -laspell "$0"||exit 1
 $VALGRIND ./a.out "$@"
 retval=$?
-rm ./a.out
+#rm ./a.out
 exit $retval
 
 #endif
 
-#include <QtWidgets>
-
 #include "globals.h"
 
-#define PACKAGE_NAME "Spell Check Example"
+//#define PACKAGE_NAME "Spell Check Example"
 
 #define QUITITEM 500
 #define ABOUTITEM 600
 #define ABOUTQTITEM 601
 #define HELPITEM 602
+#define SPELLCHECKDOCITEM 603
+#define SPELLCHECKWORDITEM 604
+
+QTextEdit	*te=NULL;
+QMainWindow	*mainwindow=NULL;
+QT_SpellCheckClass *globalchecker;
+
+void doCheck(void)
+{
+//ignored words kept for life of globalchecker
+	globalchecker->te=te;
+	globalchecker->badwordHiliteColour="#40ff0000";
+	globalchecker->doSpellCheckDoc();
+}
+
+void doCheckWord(void)
+{
+//ignored words forgotton at end of this function
+//language not specifically set so defaults to "en" (includes us an gb etc spellings eg color/colour)
+	QT_SpellCheckClass checker(mainwindow);
+	checker.te=te;
+	checker.doSpellCheckWord(te->textCursor().selectedText());
+}
 
 QMenu* setHelpMenu(QMenuBar *menubar)
 {
@@ -131,6 +152,12 @@ QMenu* setFileMenu(QMenuBar *menubar)
 	act=new QAction(QIcon::fromTheme("preferences-desktop"),"Prefs",actions);
 	act->setData(102);
 
+	act=new QAction(QIcon::fromTheme("tools-check-spelling"),"Spell Check Document",actions);
+	act->setData(SPELLCHECKDOCITEM);
+
+	act=new QAction(QIcon::fromTheme("tools-check-spelling"),"Spell Check Word",actions);
+	act->setData(SPELLCHECKWORDITEM);
+
 	act=new QAction(actions);
 	act->setSeparator(true);
 
@@ -144,6 +171,16 @@ QMenu* setFileMenu(QMenuBar *menubar)
 			qDebug()<<action->text()<<action->data().toInt();
 			if(action->data().toInt()==QUITITEM)
 				qApp->exit(0);
+
+			if(action->data().toInt()==SPELLCHECKDOCITEM)
+				{
+					doCheck();
+				}
+			if(action->data().toInt()==SPELLCHECKWORDITEM)
+				{
+					doCheckWord();
+				}
+
 		});
 	return(menu);
 }
@@ -152,9 +189,8 @@ int main(int argc, char **argv)
 {
 	QApplication app(argc, argv);
 
-	QMainWindow	*mainwindow=new QMainWindow;
+	mainwindow=new QMainWindow;
 	QWidget		*widg=new QWidget(mainwindow);
-	QTextEdit	*te=new QTextEdit(widg);
 	QVBoxLayout	*layout=new QVBoxLayout(widg);
 	QMenuBar		*menuBar=new QMenuBar(mainwindow);
 	QString		realDataDir=QString("%1%2").arg(getenv("APPDIR")).arg(DATADIR);
@@ -162,6 +198,7 @@ int main(int argc, char **argv)
 	QIcon::setThemeSearchPaths(QStringList()<<QString("%1/usr/share/icons").arg(getenv("APPDIR"))<<QString("/usr/share/icons")<<QString("%1/.icons").arg(getenv("HOME")) <<QString("%1/icons").arg(realDataDir) );
 	QIcon::setFallbackSearchPaths(QStringList()<<QString("%1/usr/share/icons").arg(getenv("APPDIR"))<<QString("/usr/share/icons")<<QString("%1/.icons").arg(getenv("HOME"))  <<QString("%1/icons").arg(realDataDir));
 
+	te=new QTextEdit(widg);
 	QFile		file(QString("%1/../../LICENSE").arg(getenv("PWD")));
 	if(file.open(QIODevice::ReadOnly | QIODevice::Text))
 		{
@@ -169,7 +206,8 @@ int main(int argc, char **argv)
 			QTextStream in(&file);
 			data=in.readAll();
 			file.close();
-			te->setPlainText(data);
+			//te->setPlainText(data);
+			te->setPlainText("concatx this andd that\nprintz stuff\nandx more stuff\ncolor or colour\n");
 		}
 
 	layout->addWidget(te);
@@ -186,10 +224,14 @@ int main(int argc, char **argv)
 	mainwindow->setMenuBar(menuBar);
 	mainwindow->setGeometry(1322,331,535,505);
 
+	globalchecker=new QT_SpellCheckClass(mainwindow);
+	qDebug()<<"Lang codes="<<globalchecker->getLanguageCodes();
+	globalchecker->setLanguage("en_GB");
 	mainwindow->show();
 
 	app.exec();
 	delete mainwindow;
+	delete globalchecker;
 	return(0);
 }
 
