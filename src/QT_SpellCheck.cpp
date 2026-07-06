@@ -80,6 +80,7 @@ void QT_SpellCheckClass::doSpellCheckWord(QString word)
 	if(this->te==NULL || this->te->textCursor().hasSelection()==false)
 		return;
 
+	this->spellCheckWord->setWindowTitle("Check Word");
 	this->badwordstart=this->te->textCursor().selectionStart();
 	this->badwordlen=this->te->textCursor().selectedText().length();
 	this->blockFlag=true;
@@ -159,6 +160,7 @@ void QT_SpellCheckClass::doSpellCheckDoc(void)
 	if(this->te->toPlainText().isEmpty()==true)
 		return;
 
+	this->spellCheckWord->setWindowTitle("Check Text ...");
 	line=this->te->toPlainText();
 	checker=to_aspell_document_checker(ret);
 	  /* First process the line */
@@ -229,7 +231,6 @@ void QT_SpellCheckClass::buildWordCheckDialog(void)
 	QSettings	prefs("KDHedger",PACKAGE_NAME);
 
 	this->spellCheckWord=new QDialog(this->mainWindow);
-	this->spellCheckWord->setWindowTitle("Check Text");
 
 	hlayout=new QHBoxLayout;
 	hbox=new QWidget(spellCheckWord);
