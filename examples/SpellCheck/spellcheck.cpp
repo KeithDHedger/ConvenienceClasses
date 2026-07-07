@@ -61,8 +61,6 @@ exit $retval
 
 #include "globals.h"
 
-//#define PACKAGE_NAME "Spell Check Example"
-
 #define QUITITEM 500
 #define ABOUTITEM 600
 #define ABOUTQTITEM 601
@@ -70,15 +68,16 @@ exit $retval
 #define SPELLCHECKDOCITEM 603
 #define SPELLCHECKWORDITEM 604
 
-QTextEdit	*te=NULL;
-QMainWindow	*mainwindow=NULL;
-QT_SpellCheckClass *globalchecker;
+QPlainTextEdit		*te=NULL;
+QMainWindow			*mainwindow=NULL;
+QT_SpellCheckClass	*globalchecker;
 
 void doCheck(void)
 {
 //ignored words kept for life of globalchecker
 	globalchecker->te=te;
 	globalchecker->badwordHiliteColour="#40ff0000";
+	qDebug()<<"Current Lang:"<<aspell_config_retrieve(globalchecker->getConfig(),"lang");
 	globalchecker->doSpellCheckDoc();
 }
 
@@ -88,6 +87,8 @@ void doCheckWord(void)
 //language not specifically set so defaults to "en" (includes us an gb etc spellings eg color/colour)
 	QT_SpellCheckClass checker(mainwindow);
 	checker.te=te;
+	qDebug()<<"Current Lang:"<<aspell_config_retrieve(checker.getConfig(),"lang");
+
 	checker.doSpellCheckWord(te->textCursor().selectedText());
 }
 
@@ -198,7 +199,7 @@ int main(int argc, char **argv)
 	QIcon::setThemeSearchPaths(QStringList()<<QString("%1/usr/share/icons").arg(getenv("APPDIR"))<<QString("/usr/share/icons")<<QString("%1/.icons").arg(getenv("HOME")) <<QString("%1/icons").arg(realDataDir) );
 	QIcon::setFallbackSearchPaths(QStringList()<<QString("%1/usr/share/icons").arg(getenv("APPDIR"))<<QString("/usr/share/icons")<<QString("%1/.icons").arg(getenv("HOME"))  <<QString("%1/icons").arg(realDataDir));
 
-	te=new QTextEdit(widg);
+	te=new QPlainTextEdit(widg);
 	QFile		file(QString("%1/../../LICENSE").arg(getenv("PWD")));
 	if(file.open(QIODevice::ReadOnly | QIODevice::Text))
 		{
@@ -225,8 +226,7 @@ int main(int argc, char **argv)
 	mainwindow->setGeometry(1322,331,535,505);
 
 	globalchecker=new QT_SpellCheckClass(mainwindow);
-	qDebug()<<"Lang codes="<<globalchecker->getLanguageCodes();
-	globalchecker->setLanguage("en_GB");
+	qDebug()<<"Available LANG codes="<<globalchecker->getLanguageCodes();
 	mainwindow->show();
 
 	app.exec();

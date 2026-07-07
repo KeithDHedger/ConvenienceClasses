@@ -1,22 +1,3 @@
-/*
- *
- * ©K. D. Hedger. Sun  5 Jul 16:49:16 BST 2026 keithdhedger@gmail.com
-
- * This file (QT_SpellCheck.cpp) is part of examples.
-
- * examples is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
-
- * examples is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
- * You should have received a copy of the GNU General Public License
- * along with examples.  If not, see <http://www.gnu.org/licenses/>.
-*/
 
 #include "globals.h"
 
@@ -64,9 +45,7 @@ void QT_SpellCheckClass::doChangeWord(void)
 	QTextCursor cursor=this->te->textCursor();
 
 	cursor.beginEditBlock();
-	goodWord=wordListDropbox->currentText();
-	//goodWord=customWord->text();
-	//goodWord=wordListDropbox->lineEdit()->text();
+	this->goodWord=wordListDropbox->currentText();
 	cursor.setPosition(this->badwordstart);
 	cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor,this->badwordlen);
 	cursor.removeSelectedText();
@@ -186,7 +165,7 @@ void QT_SpellCheckClass::doSpellCheckDoc(void)
 			selection.cursor=te->textCursor();
 			selection.cursor.clearSelection();
 			selection.cursor.setPosition(token.offset-buffdiff,QTextCursor::MoveAnchor);
-			selection.cursor.movePosition(QTextCursor::EndOfWord,QTextCursor::KeepAnchor);
+			selection.cursor.movePosition(QTextCursor::NextCharacter,QTextCursor::KeepAnchor,xbadword.length());
 
 			extraSelections.append(selection);
 			// Apply the highlight
@@ -302,12 +281,15 @@ void QT_SpellCheckClass::buildWordCheckDialog(void)
 QT_SpellCheckClass::QT_SpellCheckClass(QMainWindow *window)
 {
 	AspellCanHaveError	*possible_err;
+	QString				lang=getenv("LANG");
 
 	this->mainWindow=window;
 
 	this->aspellConfig=new_aspell_config();
-	aspell_config_replace(this->aspellConfig,"lang","en");
-
+	if(lang.contains("."))
+		lang.chop(lang.length()-lang.lastIndexOf("."));
+	aspell_config_replace(this->aspellConfig,"lang",qPrintable(lang));
+	
 	possible_err=new_aspell_speller(this->aspellConfig);
 	if(aspell_error_number(possible_err)!=0)
 		{
@@ -324,4 +306,9 @@ QT_SpellCheckClass::QT_SpellCheckClass(QMainWindow *window)
 		this->spellChecker=to_aspell_speller(possible_err);
 
 	this->buildWordCheckDialog();
+}
+
+AspellConfig *QT_SpellCheckClass::getConfig(void)
+{
+	return(this->aspellConfig);
 }
