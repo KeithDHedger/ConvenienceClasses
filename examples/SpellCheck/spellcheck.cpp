@@ -51,7 +51,7 @@ EOF
 	esac
 fi
 
-g++ -g -Wall -I${PWD} -I${PWD}/../../src -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) ${PWD}/../../src/QT_SpellCheck.cpp -fPIC -laspell "$0"||exit 1
+g++ -g -Wall -I${PWD} -I${PWD}/../../src -DUSEPLAIN  -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) ${PWD}/../../src/QT_SpellCheck.cpp -fPIC -laspell "$0"||exit 1
 $VALGRIND ./a.out "$@"
 retval=$?
 #rm ./a.out
@@ -75,8 +75,6 @@ QT_SpellCheckClass	*globalchecker;
 void doCheck(void)
 {
 //ignored words kept for life of globalchecker
-	globalchecker->te=te;
-	globalchecker->badwordHiliteColour="#40ff0000";
 	qDebug()<<"Current Lang:"<<aspell_config_retrieve(globalchecker->getConfig(),"lang");
 	globalchecker->doSpellCheckDoc();
 }
@@ -87,8 +85,8 @@ void doCheckWord(void)
 //language not specifically set so defaults to "en" (includes us an gb etc spellings eg color/colour)
 	QT_SpellCheckClass checker(mainwindow);
 	checker.te=te;
-	qDebug()<<"Current Lang:"<<aspell_config_retrieve(checker.getConfig(),"lang");
 
+	qDebug()<<"Current Lang:"<<aspell_config_retrieve(checker.getConfig(),"lang");
 	checker.doSpellCheckWord(te->textCursor().selectedText());
 }
 
@@ -226,6 +224,9 @@ int main(int argc, char **argv)
 	mainwindow->setGeometry(1322,331,535,505);
 
 	globalchecker=new QT_SpellCheckClass(mainwindow);
+	globalchecker->te=te;
+	globalchecker->badwordHiliteColour="#40ff0000";
+
 	qDebug()<<"Available LANG codes="<<globalchecker->getLanguageCodes();
 	mainwindow->show();
 

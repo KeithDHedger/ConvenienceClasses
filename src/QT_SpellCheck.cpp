@@ -149,7 +149,10 @@ void QT_SpellCheckClass::doSpellCheckDoc(void)
 	while(token=aspell_document_checker_next_misspelling(checker),token.len!=0)
 		{
 			if(this->spellCheckWord->isHidden()==true)
-				this->spellCheckWord->show();
+				{
+					this->spellCheckWord->restoreGeometry(defaults.value("spell/spellgeometry").toByteArray());
+					this->spellCheckWord->show();
+				}
 			line=this->te->toPlainText();
 			/* Pay particular attention to how token.offset and diff is used */
 			xbadword=line.mid(token.offset+diff,token.len);

@@ -10,15 +10,17 @@ class QT_SpellCheckClass
 		QT_SpellCheckClass(QMainWindow *window);
 		~QT_SpellCheckClass();
 
+#ifdef USEPLAIN
 		QPlainTextEdit	*te=NULL;
+#else
+		QTextEdit		*te=NULL;
+#endif
 		QString			badwordHiliteColour="#40000000";
-
 		QStringList		getLanguageCodes(void);
 		void				setLanguage(QString lang);
 		void				doSpellCheckDoc(void);
 		void				doSpellCheckWord(QString word);
 		AspellConfig		*getConfig(void);
-
 
 	private:
 		QMainWindow		*mainWindow=NULL;
@@ -39,7 +41,6 @@ class QT_SpellCheckClass
 		bool				checkTheWord(QString word);
 		void				buildWordCheckDialog(void);
 		void				doChangeWord(void);
-
 };
 
 #endif
