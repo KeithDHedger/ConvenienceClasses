@@ -51,7 +51,7 @@ EOF
 	esac
 fi
 
-g++ -g -Wall -Wunreachable-code  -I${PWD} -I${PWD}/../../src -DUSEPLAIN -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) ${PWD}/../../src/QT_FindClass.cpp -fPIC "$0"||exit 1
+g++ -g -Wall -I${PWD} -I${PWD}/../../src -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) ${PWD}/../../src/ChooserDialog.cpp -fPIC "$0"||exit 1
 $VALGRIND ./a.out "$@"
 retval=$?
 #rm ./a.out
@@ -59,112 +59,21 @@ exit $retval
 
 #endif
 
-#include <QtWidgets>
-
 #include "globals.h"
 
 #define QUITITEM 500
+#define OPENITEM 501
+#define SAVEITEM 502
+#define	FOLDERITEM 503
 #define ABOUTITEM 600
 #define ABOUTQTITEM 601
 #define HELPITEM 602
-#define FINDITEM 603
-#define SWITCHITEM 604
 
-QPlainTextEdit		*doc=NULL;
-QMainWindow			*mainwindow=NULL;
-QT_FindClass	*globalfind;
-QMenu				*fileMenu;
-QMenu				*helpMenu;
-QTabWidget			*notebook=NULL;
-
-int fakeint;
-
-bool fake(void)
-{
-return(false);
-}
-
-void justSwitchPage(void)
-{
-	QPlainTextEdit	*tewidg;
-	int				cp;
-
-	globalfind->resetHighLights();
-
-	cp=notebook->currentIndex();
-
-	if(globalfind->searchBack==false)
-		{
-			cp++;
-			if(cp==notebook->count())
-				cp=0;
-		}
-	else
-		{
-			cp--;
-			if(cp<0)
-				cp=notebook->count()-1;
-		}
-
-	notebook->setCurrentIndex(cp);
-	tewidg=(QPlainTextEdit*)notebook->currentWidget();
-	globalfind->te=tewidg;
-	QTextCursor c=tewidg->textCursor();
-	c.clearSelection();
-	tewidg->setTextCursor(c);
-	tewidg->setFocus();
-}
-
-void switchPage(void)
-{
-	QPlainTextEdit	*tewidg;
-	int				cp;
-
-	cp=notebook->currentIndex();
-
-	for(int j=0;j<notebook->count();j++)
-		{
-			if(globalfind->searchBack==false)
-				{
-					cp++;
-					if(cp==notebook->count())
-						cp=0;
-				}
-			else
-				{
-					cp--;
-					if(cp<0)
-						cp=notebook->count()-1;
-				}
-
-			notebook->setCurrentIndex(cp);
-			tewidg=(QPlainTextEdit*)notebook->currentWidget();
-			globalfind->te=tewidg;
-
-			QTextCursor c=tewidg->textCursor();
-			if(globalfind->searchBack==false)
-				c.setPosition(0);
-			else
-				c.movePosition(QTextCursor::End);
-			tewidg->setTextCursor(c);
-
-			if(globalfind->checkForMatch()==false)
-				{
-					continue;
-				}
-			else
-				{
-					globalfind->resetSearchPositions();
-					tewidg->setFocus();
-					return;
-				}
-		}
-}
-
-void doFindReplace(void)
-{
-	globalfind->showFindDialog();
-}
+QPlainTextEdit	*te=NULL;
+QMainWindow		*mainwindow=NULL;
+QMenu			*fileMenu;
+QMenu			*helpMenu;
+QVector<QString>	fileTypeFilters;
 
 QMenu* setHelpMenu(QMenuBar *menubar)
 {
@@ -206,6 +115,70 @@ QMenu* setHelpMenu(QMenuBar *menubar)
 	return(menu);
 }
 
+void doOpenFile(void)
+{
+	chooserDialogClass	chooser(chooserDialogType::openDialog);
+
+	chooser.setMultipleSelect(true);
+	chooser.setShowImagesInList(true);
+
+	for(int j=0;j<fileTypeFilters.size();j++)
+		chooser.addFileTypes(fileTypeFilters.at(j));
+
+	chooser.dialogWindow.exec();
+
+	if(chooser.valid==false)
+		{
+			qDebug()<<"Open canceled";
+			return;
+		}
+
+	if(chooser.multiFileList.count()>0)
+		{
+			for(int j=0;j<chooser.multiFileList.count();j++)
+				{
+					qDebug()<<"File"<<j<<chooser.multiFileList.at(j);
+				}
+		}
+	///qDebug()<<"File"<<j<<chooser.multiFileList.at(j);
+}
+
+void doSaveFile(void)
+{
+//	chooserDialogClass	chooser(chooserDialogType::saveDialog,"Untitled");
+//	chooser.setMultipleSelect(false);
+//	chooser.setShowImagesInList(true);
+//
+//	for(int j=0;j<fileTypeFilters.size();j++)
+//		chooser.addFileTypes(fileTypeFilters.at(j));
+//		
+//	chooser.dialogWindow.exec();
+//	if(chooser.valid==false)
+//		{
+//			qDebug()<<"Save canceled";
+//			return;
+//		}
+//
+//	qDebug()<<"Save File"<<chooser.selectedFilePath;
+}
+
+void doSelectFolder(void)
+{
+	chooserDialogClass	chooser(chooserDialogType::folderDialog);
+	chooser.setMultipleSelect(false);
+	chooser.setShowImagesInList(true);
+		
+	chooser.dialogWindow.exec();
+	if(chooser.valid==false)
+		{
+			qDebug()<<"Select canceled";
+			return;
+		}
+
+	qDebug()<<"Selected Folder"<<chooser.selectedFolder;
+
+}
+
 QMenu* setFileMenu(QMenuBar *menubar)
 {
 	QActionGroup		*actions;
@@ -218,13 +191,17 @@ QMenu* setFileMenu(QMenuBar *menubar)
 
 	act=new QAction(QIcon::fromTheme("document-open"),"Open",actions);
 	act->setShortcut(QKeySequence::Open);
-	act->setData(100);
+	act->setData(OPENITEM);
 
-	act=new QAction(QIcon::fromTheme("document-open"),"Switch",actions);
-	act->setData(SWITCHITEM);
+	act=new QAction(QIcon::fromTheme("document-save"),"Save",actions);
+	act->setShortcut(QKeySequence::Save);
+	act->setData(SAVEITEM);
 
-	act=new QAction(QIcon::fromTheme("edit-find"),"Find",actions);
-	act->setData(FINDITEM);
+	act=new QAction(QIcon::fromTheme("document-open"),"Select Folder",actions);
+	act->setData(FOLDERITEM);
+
+	act=new QAction(QIcon::fromTheme("preferences-desktop"),"Prefs",actions);
+	act->setData(102);
 
 	act=new QAction(actions);
 	act->setSeparator(true);
@@ -237,12 +214,21 @@ QMenu* setFileMenu(QMenuBar *menubar)
 	QObject::connect(actions,&QActionGroup::triggered,actions,[&](QAction *action)
 		{
 			qDebug()<<action->text()<<action->data().toInt();
-			if(action->data().toInt()==QUITITEM)
-				qApp->exit(0);
-			if(action->data().toInt()==FINDITEM)
-				doFindReplace();
-			if(action->data().toInt()==SWITCHITEM)
-				justSwitchPage();
+			switch(action->data().toInt())
+				{
+					case QUITITEM:
+						qApp->exit(0);
+						break;
+					case OPENITEM:
+						doOpenFile();
+						break;
+					case SAVEITEM:
+						doSaveFile();
+						break;
+					case FOLDERITEM:
+						doSelectFolder();
+						break;
+				}
 		});
 	return(menu);
 }
@@ -250,11 +236,15 @@ QMenu* setFileMenu(QMenuBar *menubar)
 int main(int argc, char **argv)
 {
 	QApplication app(argc, argv);
+	QWidget		*widg;
+	QVBoxLayout	*layout;
 	QMenuBar		*menuBar;
 	QString		realDataDir=QString("%1%2").arg(getenv("APPDIR")).arg(DATADIR);
 	QSettings	prefs("KDHedger",PACKAGE_NAME);
 
 	mainwindow=new QMainWindow;
+	widg=new QWidget(mainwindow);
+	layout=new QVBoxLayout(widg);
 	menuBar=new QMenuBar(mainwindow);
 
 	app.setOrganizationDomain("KDHedger");
@@ -263,35 +253,22 @@ int main(int argc, char **argv)
 	QIcon::setThemeSearchPaths(QStringList()<<QString("%1/usr/share/icons").arg(getenv("APPDIR"))<<QString("/usr/share/icons")<<QString("%1/.icons").arg(getenv("HOME")) <<QString("%1/icons").arg(realDataDir) );
 	QIcon::setFallbackSearchPaths(QStringList()<<QString("%1/usr/share/icons").arg(getenv("APPDIR"))<<QString("/usr/share/icons")<<QString("%1/.icons").arg(getenv("HOME"))  <<QString("%1/icons").arg(realDataDir));
 
-//add some pages
-	notebook=new QTabWidget(mainwindow);
-	globalfind=new QT_FindClass(mainwindow);
-	globalfind->showMultiDoc=true;
-	QObject::connect(&globalfind->findWrapped,&QAction::triggered,[&]()
+	te=new QPlainTextEdit(widg);
+	QFile		file(QString("%1/../../LICENSE").arg(getenv("PWD")));
+	if(file.open(QIODevice::ReadOnly | QIODevice::Text))
 		{
-			switchPage();
-		});
+			QString data="";
+			QTextStream in(&file);
+			data=in.readAll();
+			file.close();
+			te->setPlainText(data);
+		}
 
-	doc=new QPlainTextEdit;
-	QString data;
-	data="abc xx\nxx 123 xx\nxx abc xx\nxx 143 xx\nxx abc xx\nxx 123 xx\nxx1245673xx\n";
-	doc->setPlainText(data);
-	notebook->addTab(doc,"doc1");
-	globalfind->te=doc;
+	layout->addWidget(te);
+	layout->setAlignment(Qt::AlignCenter);
 
-	doc=new QPlainTextEdit;
-	data="asd xx\nxx 123 xx\nxx asd xx\nxx 123 xx\nxx12777773xx\n\nxx asd xx\nxx 123 xx\n";
-	doc->setPlainText(data);
-	notebook->addTab(doc,"doc2");
-
-	doc=new QPlainTextEdit;
-	data="123\nasd xx\nxx 123 xx\nxx asd xx\nxx 123 xx\nxx asd xx\nxx 123 xx123\n";
-	//data="asd xx\nxx qqq xx\nxx asd xx\nxx zzz xx\nxx asd xx\nxx ttt xx\n";
-	doc->setPlainText(data);
-	notebook->addTab(doc,"doc3");
-
-	//notebook->tabBar()->hide();
-	mainwindow->setCentralWidget(notebook);
+	widg->setLayout(layout);
+	mainwindow->setCentralWidget(widg);
 
 	mainwindow->setWindowTitle(PACKAGE_NAME);
 
@@ -299,6 +276,11 @@ int main(int argc, char **argv)
 	helpMenu=setHelpMenu(menuBar);
 
 	mainwindow->setMenuBar(menuBar);
+
+	fileTypeFilters.append("*.cpp;*.c;*.h;*.hpp;*.m;*.mm;*.py;*.go;*.java;*.js;*.rb;*.sh;*.rs;*.tcl;*.pl");
+	fileTypeFilters.append("*.html;*.xml;*.css;*.php;*.pro;*.in;*.am;*.m4;*.md;*.ac;*.json;*.class;*.sql");
+	fileTypeFilters.append("All Files");
+
 	if(prefs.contains("app/geometry"))
 		mainwindow->restoreGeometry(prefs.value("app/geometry").toByteArray());
 	else
@@ -306,12 +288,11 @@ int main(int argc, char **argv)
 
 	mainwindow->show();
 
-	app.exec();	
+	app.exec();
 
 	prefs.setValue("app/geometry",mainwindow->saveGeometry());
-
-	delete globalfind;
 	delete mainwindow;
+
 	return(0);
 }
 

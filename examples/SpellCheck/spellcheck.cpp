@@ -206,7 +206,7 @@ int main(int argc, char **argv)
 			data=in.readAll();
 			file.close();
 			//te->setPlainText(data);
-			te->setPlainText("concatx this andd that\nprintz stuff\nandx more stuff\ncolor or colour\n");
+			te->setPlainText(" * ©  © ©K. D. Hedger. Sat 18 Jul 16:24:13 BST 2026 keithdhedger@gmail.com\nconcatx this andd that\nprintz stuff\nandx more stuff\ncolor or colour\n");
 		}
 
 	layout->addWidget(te);

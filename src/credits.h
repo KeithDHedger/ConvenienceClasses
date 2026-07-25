@@ -45,7 +45,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
 
-static const char	*credits="K.D.Hedger ©2013-2023<br><a href=\"mailto:" MYEMAIL "\">Email Me</a><br>" \
+static const char	*credits="K.D.Hedger ©2013-2026<br><a href=\"mailto:" MYEMAIL "\">Email Me</a><br>" \
 					"<a href=\"" GLOBALWEBSITE "\">Homepage</a>" \
 					"<br><br>More by the same author<br>" \
 					"<a href=\"" KKEDITQTPAGE "\">KKEditQT<br>" \

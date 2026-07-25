@@ -52,10 +52,13 @@ void QT_SpellCheckClass::doChangeWord(void)
 	cursor.insertText(this->goodWord);
 	this->blockFlag=false;
 	cursor.endEditBlock();
+	this->changed=true;
 }
 
 void QT_SpellCheckClass::doSpellCheckWord(QString word)
 {
+	this->changed=false;
+
 	if(this->te==NULL || this->te->textCursor().hasSelection()==false)
 		return;
 
@@ -126,6 +129,7 @@ void QT_SpellCheckClass::doSpellCheckDoc(void)
 	unsigned int						goodwordlen;
 	int								buffdiff=0;
 
+	this->changed=false
 	/* Set up the document checker */
 	if((this->spellChecker==NULL) || (this->te==NULL))
 		return;
@@ -138,12 +142,11 @@ void QT_SpellCheckClass::doSpellCheckDoc(void)
 
 	if(this->te->toPlainText().isEmpty()==true)
 		return;
-
 	this->spellCheckWord->setWindowTitle("Check Text ...");
 	line=this->te->toPlainText();
 	checker=to_aspell_document_checker(ret);
 	  /* First process the line */
-	aspell_document_checker_process(checker,qPrintable(line),-1);
+	aspell_document_checker_process(checker,line.toLatin1().constData(),-1);
 	diff=0;
 	  /* Now find the misspellings in the line */
 	while(token=aspell_document_checker_next_misspelling(checker),token.len!=0)

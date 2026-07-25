@@ -16,6 +16,8 @@ class QT_SpellCheckClass
 		QTextEdit		*te=NULL;
 #endif
 		QString			badwordHiliteColour="#40000000";
+		bool				changed=false;
+
 		QStringList		getLanguageCodes(void);
 		void				setLanguage(QString lang);
 		void				doSpellCheckDoc(void);
