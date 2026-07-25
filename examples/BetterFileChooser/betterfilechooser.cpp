@@ -140,26 +140,26 @@ void doOpenFile(void)
 					qDebug()<<"File"<<j<<chooser.multiFileList.at(j);
 				}
 		}
-	///qDebug()<<"File"<<j<<chooser.multiFileList.at(j);
 }
 
 void doSaveFile(void)
 {
-//	chooserDialogClass	chooser(chooserDialogType::saveDialog,"Untitled");
-//	chooser.setMultipleSelect(false);
-//	chooser.setShowImagesInList(true);
-//
-//	for(int j=0;j<fileTypeFilters.size();j++)
-//		chooser.addFileTypes(fileTypeFilters.at(j));
-//		
-//	chooser.dialogWindow.exec();
-//	if(chooser.valid==false)
-//		{
-//			qDebug()<<"Save canceled";
-//			return;
-//		}
-//
-//	qDebug()<<"Save File"<<chooser.selectedFilePath;
+	chooserDialogClass	chooser(chooserDialogType::saveDialog,"Untitled");
+	chooser.setShowImagesInList(true);
+
+	for(int j=0;j<fileTypeFilters.size();j++)
+		chooser.addFileTypes(fileTypeFilters.at(j));
+		
+	chooser.dialogWindow.exec();
+	if(chooser.valid==false)
+		{
+			qDebug()<<"Save canceled";
+			return;
+		}
+
+	qDebug()<<"Save File"<<chooser.multiFileList.at(0);
+	if(chooser.multiFileList.at(0).isEmpty()==false)
+		system(qPrintable(QString("touch '%1'").arg(chooser.multiFileList.at(0))));
 }
 
 void doSelectFolder(void)
@@ -277,8 +277,8 @@ int main(int argc, char **argv)
 
 	mainwindow->setMenuBar(menuBar);
 
-	fileTypeFilters.append("*.cpp;*.c;*.h;*.hpp;*.m;*.mm;*.py;*.go;*.java;*.js;*.rb;*.sh;*.rs;*.tcl;*.pl");
-	fileTypeFilters.append("*.html;*.xml;*.css;*.php;*.pro;*.in;*.am;*.m4;*.md;*.ac;*.json;*.class;*.sql");
+//	fileTypeFilters.append("*.cpp;*.c;*.h;*.hpp;*.m;*.mm;*.py;*.go;*.java;*.js;*.rb;*.sh;*.rs;*.tcl;*.pl");
+//	fileTypeFilters.append("*.html;*.xml;*.css;*.php;*.pro;*.in;*.am;*.m4;*.md;*.ac;*.json;*.class;*.sql");
 	fileTypeFilters.append("All Files");
 
 	if(prefs.contains("app/geometry"))
