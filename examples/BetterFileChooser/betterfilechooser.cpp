@@ -1,5 +1,8 @@
 #if 0
 
+echo "Broken needs complety redoing ..."
+exit 1
+
 if [[ ! "X$USEVALGRIND" = "X" ]];then
 cat>ignorelibleaks<<EOF
 {
@@ -51,8 +54,8 @@ EOF
 	esac
 fi
 
-g++ -g -Wall -I${PWD} -I${PWD}/../../src -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) ${PWD}/../../src/ChooserDialog.cpp -fPIC "$0"||exit 1
-$VALGRIND ./a.out "$@"
+g++ -g -Wall -I${PWD} -I${PWD}/../../src -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) ${PWD}/../../src/ChooserDialog.cpp -fPIC "$0" -o ./chooser||exit 1
+$VALGRIND ./chooser "$@"
 retval=$?
 #rm ./a.out
 exit $retval
@@ -117,7 +120,7 @@ QMenu* setHelpMenu(QMenuBar *menubar)
 
 void doOpenFile(void)
 {
-	chooserDialogClass	chooser(chooserDialogType::openDialog);
+	chooserDialogClass	chooser(chooserDialogType::loadDialog);
 
 	chooser.setMultipleSelect(true);
 	chooser.setShowImagesInList(true);
@@ -136,9 +139,7 @@ void doOpenFile(void)
 	if(chooser.multiFileList.count()>0)
 		{
 			for(int j=0;j<chooser.multiFileList.count();j++)
-				{
-					qDebug()<<"File"<<j<<chooser.multiFileList.at(j);
-				}
+				qDebug()<<"File"<<j<<chooser.multiFileList.at(j)<<"exists:"<<QFileInfo::exists(chooser.multiFileList.at(j));
 		}
 }
 
@@ -157,26 +158,26 @@ void doSaveFile(void)
 			return;
 		}
 
-	qDebug()<<"Save File"<<chooser.multiFileList.at(0);
+	qDebug()<<"Save File"<<chooser.multiFileList.at(0)<<"exists:"<<QFileInfo::exists(chooser.multiFileList.at(0));
 	if(chooser.multiFileList.at(0).isEmpty()==false)
 		system(qPrintable(QString("touch '%1'").arg(chooser.multiFileList.at(0))));
 }
 
 void doSelectFolder(void)
 {
-	chooserDialogClass	chooser(chooserDialogType::folderDialog);
-	chooser.setMultipleSelect(false);
-	chooser.setShowImagesInList(true);
-		
-	chooser.dialogWindow.exec();
-	if(chooser.valid==false)
-		{
-			qDebug()<<"Select canceled";
-			return;
-		}
-
-	qDebug()<<"Selected Folder"<<chooser.selectedFolder;
-
+//	chooserDialogClass	chooser(chooserDialogType::folderDialog);
+//	//chooser.setMultipleSelect(false);
+//	//chooser.setShowImagesInList(true);
+//		
+//	chooser.dialogWindow.exec();
+//	if(chooser.valid==false)
+//		{
+//			qDebug()<<"Select canceled";
+//			return;
+//		}
+//
+//	//qDebug()<<"Selected Folder"<<chooser.selectedFolder<<"exists:"<<QFileInfo::exists(chooser.selectedFolder);
+//	qDebug()<<"Selected Folder"<<chooser.multiFileList.at(0)<<"exists:"<<QFileInfo::exists(chooser.multiFileList.at(0));
 }
 
 QMenu* setFileMenu(QMenuBar *menubar)
@@ -197,7 +198,7 @@ QMenu* setFileMenu(QMenuBar *menubar)
 	act->setShortcut(QKeySequence::Save);
 	act->setData(SAVEITEM);
 
-	act=new QAction(QIcon::fromTheme("document-open"),"Select Folder",actions);
+	act=new QAction(QIcon::fromTheme("folder-open"),"Select Folder",actions);
 	act->setData(FOLDERITEM);
 
 	act=new QAction(QIcon::fromTheme("preferences-desktop"),"Prefs",actions);
@@ -252,6 +253,7 @@ int main(int argc, char **argv)
 
 	QIcon::setThemeSearchPaths(QStringList()<<QString("%1/usr/share/icons").arg(getenv("APPDIR"))<<QString("/usr/share/icons")<<QString("%1/.icons").arg(getenv("HOME")) <<QString("%1/icons").arg(realDataDir) );
 	QIcon::setFallbackSearchPaths(QStringList()<<QString("%1/usr/share/icons").arg(getenv("APPDIR"))<<QString("/usr/share/icons")<<QString("%1/.icons").arg(getenv("HOME"))  <<QString("%1/icons").arg(realDataDir));
+QIcon::setThemeName("betterchoosericons");
 
 	te=new QPlainTextEdit(widg);
 	QFile		file(QString("%1/../../LICENSE").arg(getenv("PWD")));

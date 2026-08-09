@@ -6,7 +6,7 @@
 
 #define MAXIMAGESIZETOTHUMB 2000000
 
-enum class chooserDialogType{saveDialog,openDialog,folderDialog};
+enum class chooserDialogType{saveDialog,loadDialog};
 
 class chooserDialogClass
 {
@@ -15,9 +15,13 @@ class chooserDialogClass
 		~chooserDialogClass();
 
 		QDialog				dialogWindow;
+		QString				localWD;
+		QString				selectedFileName;
+		QString				selectedFilePath;
+		QString				realFolderPath;
+		QString				realName;
+		QString				realFilePath;
 		QVector<QString>		multiFileList;
-		QString				selectedFolder;
-
 		bool					fileExists=false;
 		bool					useMulti=false;
 		bool					valid=false;
@@ -27,13 +31,8 @@ class chooserDialogClass
 		void					addFileTypes(QString types);
 
 	private:
-	
-		QString				rawPath;
-		QString				lastSelectedFilePath;
-		QString				selectedFileName;
 		QLineEdit			filepathEdit;
 		QComboBox			fileTypes;
-
 		QListView			fileList;
 		QStandardItemModel	*fileListModel;
 
@@ -56,9 +55,6 @@ class chooserDialogClass
 		int					maxRecents=21;
 		QString				recentFoldersPath;
 		QString				recentFilesPath;
-		QString				currentFolder;
-
-		chooserDialogType	dialogType=chooserDialogType::openDialog;
 
 		void					buildMainGui(void);
 		void					setSideList(void);
@@ -69,9 +65,6 @@ class chooserDialogClass
 		void					showPreViewData(void);
 		void					setFileData(void);
 		void					setFavs(void);
-		QString				getProperPath(QString str);
-		void					setLast(QString str);
-		void					setRecents(QString str);
 };
 
 #endif

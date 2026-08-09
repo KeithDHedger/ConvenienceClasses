@@ -1,0 +1,14 @@
+[Icon Theme]
+Name=betterchoosericons
+
+Directories=places,mimetypes
+
+[places]
+Size=48
+Context=Places
+Type=Scalable
+
+[mimetypes]
+Size=48
+Context=MimeTypes
+Type=Scalable

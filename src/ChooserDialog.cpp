@@ -62,12 +62,9 @@ void chooserDialogClass::setFileList(void)
 {
 	QStandardItem	*item=NULL;
 	QStringList		namefilters;
-	QDir				d=this->rawPath;
+	QDir				d=this->localWD;
 	QDir::Filters	dfilts=QDir::System|QDir::Dirs|QDir::NoDot;
 	QFileInfoList	fl;
-
-	if(this->rawPath==this->recentFilesPath || this->rawPath==this->recentFoldersPath)
-		dfilts|=QDir::NoDotDot;
 
 	if(this->showHidden==true)
 		dfilts|=QDir::Hidden;
@@ -79,26 +76,20 @@ void chooserDialogClass::setFileList(void)
 		
 	fl=d.entryInfoList(QStringList(),dfilts,QDir::Name);
 
-	this->currentFolder=this->rawPath;
+	dfilts=QDir::Files|QDir::System|QDir::NoDot;
+	if(this->showHidden==true)
+		dfilts|=QDir::Hidden;
 
-	if(this->dialogType!=chooserDialogType::folderDialog)
-		{
-			dfilts=QDir::Files|QDir::NoDot;
-			if(this->showHidden==true)
-				dfilts|=QDir::Hidden;
-
-			fl.append(d.entryInfoList(namefilters,dfilts,QDir::Name));
-		}
+	fl.append(d.entryInfoList(namefilters,dfilts,QDir::Name));
 
 	this->fileListModel->clear();
 	for(int j=0;j<fl.size();j++)
 		{
 			item=NULL;
-			
 			if(fl[j].isSymLink() && (fl[j].isFile() || fl[j].isDir()))
 				{
 					item=new QStandardItem(this->getFileIcon(fl[j].canonicalFilePath()),QString("%1->%2").arg(fl[j].fileName()).arg(fl[j].symLinkTarget()));
-					item->setFont(QFont(item->font().family(),-1,QFont::Bold));	
+					item->setFont(QFont(item->font().family(),-1,QFont::Bold));				
 				}
 			else if(fl[j].isSymLink() && fl[j].exists()==false)
 				{
@@ -107,18 +98,16 @@ void chooserDialogClass::setFileList(void)
 				}
 			else
 				{
-					if(fl[j].isDir()==false && this->dialogType==chooserDialogType::folderDialog)
-						continue;
 					item=new QStandardItem(this->getFileIcon(fl[j].canonicalFilePath()),fl[j].fileName());
 				}
 
+			if((fl[j].isSymLink() && fl[j].isDir()) || (fl[j].isDir()))
+				item->setDragEnabled(true);
+			else
+				item->setDragEnabled(false);
+				
 			if(item!=NULL)
 				{
-					if((fl[j].isSymLink() && fl[j].isDir()) || (fl[j].isDir()))
-						item->setDragEnabled(true);
-					else
-						item->setDragEnabled(false);
-
 					item->setData(fl[j].fileName(),Qt::UserRole);
 					item->setStatusTip(fl[j].canonicalFilePath());
 					this->fileListModel->appendRow(item);
@@ -156,21 +145,10 @@ void chooserDialogClass::setSideList(void)
 	this->sideListModel->appendRow(item);
 
 //recent files
-
-//recent files
-	if(this->dialogType!=chooserDialogType::folderDialog)
-		{
-			item=new QStandardItem(QIcon::fromTheme("folder-saved-search"),"Recent Files");
-			fullFilePathData=this->recentFilesPath;
-			item->setData(fullFilePathData,Qt::UserRole);
-			this->sideListModel->appendRow(item);
-		}
-//
-//
-//	item=new QStandardItem(QIcon::fromTheme("folder-saved-search"),"Recent Files");
-//	fullFilePathData=this->recentFilesPath;
-//	item->setData(fullFilePathData,Qt::UserRole);
-//	this->sideListModel->appendRow(item);
+	item=new QStandardItem(QIcon::fromTheme("folder-saved-search"),"Recent Files");
+	fullFilePathData=this->recentFilesPath;
+	item->setData(fullFilePathData,Qt::UserRole);
+	this->sideListModel->appendRow(item);
 
 	item=new QStandardItem("");
 	item->setEnabled(false);
@@ -201,8 +179,7 @@ void chooserDialogClass::setSideList(void)
 	for(int j=0;j<sl.size();j++)
 		{
 			item=new QStandardItem(QIcon::fromTheme("user-bookmarks"),QFileInfo(sl.at(j)).fileName());
-			//item->setData(QFileInfo(sl.at(j)).fileName(),Qt::UserRole);
-			item->setData(sl.at(j),Qt::UserRole);
+			item->setData(QFileInfo(sl.at(j)).fileName(),Qt::UserRole);
 			item->setStatusTip(sl.at(j));
 			this->sideListModel->appendRow(item);	
 		}
@@ -218,18 +195,15 @@ void chooserDialogClass::showPreViewData(void)
 	int				md;
 	struct stat		sb;
 
-	//if(this->selectedFilePath.isEmpty()==true)
-	if(this->lastSelectedFilePath.isEmpty()==true)
+	if(this->selectedFilePath.isEmpty()==true)
 		return;
 
-	//type=db.mimeTypeForFile(this->selectedFilePath);
-	type=db.mimeTypeForFile(this->lastSelectedFilePath);
+	type=db.mimeTypeForFile(this->selectedFilePath);
 	this->previewMimeType.setText(type.name());
 
 	if(type.name().contains("image"))
 		{
-			//pixmap=QIcon(this->selectedFilePath).pixmap(QSize(128,128));
-			pixmap=QIcon(this->lastSelectedFilePath).pixmap(QSize(128,128));
+			pixmap=QIcon(this->selectedFilePath).pixmap(QSize(128,128));
 			if(pixmap.isNull()==true)
 				{
 					icon=QIcon::fromTheme(type.iconName(),QIcon::fromTheme("image"));
@@ -238,17 +212,14 @@ void chooserDialogClass::showPreViewData(void)
 		}
 	else
 		{
-			//icon=this->getFileIcon(this->selectedFilePath);
-			icon=this->getFileIcon(this->lastSelectedFilePath);
+			icon=this->getFileIcon(this->selectedFilePath);
 			pixmap=icon.pixmap(QSize(128,128));
 		}
 
 	this->previewIcon.setPixmap(pixmap);
-	//this->previewSize.setText(QString("Size: %1").arg(QFileInfo(this->selectedFilePath).size()));
-	this->previewSize.setText(QString("Size: %1").arg(QFileInfo(this->lastSelectedFilePath).size()));
+	this->previewSize.setText(QString("Size: %1").arg(QFileInfo(this->selectedFilePath).size()));
 
-	//if(lstat(this->selectedFilePath.toStdString().c_str(),&sb)!=-1)
-	if(lstat(this->lastSelectedFilePath.toStdString().c_str(),&sb)!=-1)
+	if(lstat(this->selectedFilePath.toStdString().c_str(),&sb)!=-1)
 		{
 			md=sb.st_mode & 07777;
 			mod.setNum(md,8);
@@ -259,28 +230,23 @@ void chooserDialogClass::showPreViewData(void)
 void chooserDialogClass::selectItem(const QModelIndex &index)
 {
 	QString t;
-	t=this->rawPath+"/"+index.data(Qt::UserRole).toString();
-//	if(this->saveDialog==false)
-//		{
-//			this->filepathEdit.setText(t);
-//		}
-//	else
-//		{
-//			if(QFileInfo(t).isDir()==false)
-//				this->filepathEdit.setText(index.data(Qt::UserRole).toString());
-//		}
+	t=QFileInfo(this->localWD+"/"+index.data(Qt::UserRole).toString()).absoluteFilePath();
+	if(this->saveDialog==false)
+		{
+			this->filepathEdit.setText(t);
+		}
+	else
+		{
+			if(QFileInfo(t).isDir()==false)
+				this->filepathEdit.setText(index.data(Qt::UserRole).toString());
+		}
 
-		this->selectedFileName=index.data(Qt::UserRole).toString();
-	//this->selectedFilePath=t;
-	this->lastSelectedFilePath=t;
-	//qDebug()<<"9999"<<this->selectedFilePath<<this->lastSelectedFilePath;
-	//this->realFilePath=QFileInfo(this->selectedFilePath).canonicalFilePath();
-	//this->realFolderPath=QFileInfo(this->realFilePath).canonicalPath();
-	//this->realName=QFileInfo(this->realFilePath).fileName();;
+	this->selectedFileName=index.data(Qt::UserRole).toString();
+	this->selectedFilePath=t;
+	this->realFilePath=QFileInfo(this->selectedFilePath).canonicalFilePath();
+	this->realFolderPath=QFileInfo(this->realFilePath).canonicalPath();
+	this->realName=QFileInfo(this->realFilePath).fileName();;
 
-//qDebug()<<"---------------------"<<this->currentFolder<<index.data(Qt::UserRole).toString();
-this->selectedFolder=this->currentFolder+"/"+index.data(Qt::UserRole).toString();
-this->selectedFolder=this->getProperPath(this->selectedFolder);
 	this->showPreViewData();
 }
 
@@ -412,7 +378,33 @@ void chooserDialogClass::setFileData(void)
 	QString				filepath;
 	QSettings			prefs("KDHedger","ChooserDialog");
 	QDir					tdir;
-	QString				recent;
+	QString				recentfiles;
+
+	this->localWD=QFileInfo(this->localWD).absoluteFilePath();
+	if(this->saveDialog==true)
+		{
+			this->selectedFilePath=QFileInfo(this->localWD+"/"+this->filepathEdit.text()).absoluteFilePath();
+			this->selectedFileName=QFileInfo(this->localWD+"/"+this->filepathEdit.text()).fileName();;
+
+			this->realName=QFileInfo(QFileInfo(this->selectedFilePath).canonicalFilePath()).fileName();
+			this->realFilePath=QFileInfo(this->selectedFilePath).canonicalFilePath();
+		}
+	else
+		{
+			this->selectedFilePath=QFileInfo(this->filepathEdit.text()).absoluteFilePath();
+			this->selectedFileName=QFileInfo(this->selectedFilePath).fileName();
+
+			this->realFilePath=QFileInfo(QFileInfo(this->filepathEdit.text()).absoluteFilePath()).canonicalFilePath();
+			this->realName=QFileInfo(this->realFilePath).fileName();
+		}
+
+	fp=QFileInfo(this->selectedFilePath).canonicalFilePath();
+	if(fp.isEmpty()==false)
+		this->realFolderPath=QFileInfo(this->selectedFilePath).canonicalPath();
+	else
+		this->realFolderPath=QFileInfo(this->localWD).canonicalFilePath();
+
+	this->fileExists=QFileInfo(this->realFilePath).exists();
 	
 	model=this->fileList.selectionModel();
 	list=model->selectedIndexes();
@@ -422,88 +414,57 @@ void chooserDialogClass::setFileData(void)
 		{
 			for(int j=0;j<list.count();j++)
 				{
-					if(this->dialogType==chooserDialogType::saveDialog)
-						filepath=this->currentFolder+"/"+filepathEdit.text();
-					else
-						filepath=this->currentFolder+"/"+list.at(j).data(Qt::UserRole).toString();
-					filepath=this->getProperPath(filepath);
-					this->setRecents(filepath);
+					filepath=QFileInfo(this->localWD+"/"+list.at(j).data(Qt::UserRole).toString()).absoluteFilePath();
 					if(QFileInfo(filepath).isDir()==false)
-						this->multiFileList.push_back(filepath);
+						{
+							if(this->recentFilesPath.compare(this->localWD)==0)
+								{
+									this->multiFileList.push_back(QFileInfo(QString("%1").arg(filepath)).canonicalFilePath());
+								}
+							else
+								{
+									this->multiFileList.push_back(filepath);
+								}
+							QFile f(filepath);
+							recentfiles=QString("%1/%2").arg(this->recentFilesPath).arg(list.at(j).data(Qt::UserRole).toString());
+							f.link(recentfiles);
+							f.setFileName(this->realFolderPath);
+							recentfiles=QString("%1/%2").arg(this->recentFoldersPath).arg(QFileInfo(this->realFolderPath).fileName());
+							f.link(recentfiles);
+						}
 				}
 		}
 	else
 		{
-			if(this->dialogType==chooserDialogType::folderDialog)
-			{
-			qDebug()<<this->selectedFolder<<this->currentFolder<<QDir::cleanPath(this->currentFolder);
-			filepath=this->currentFolder;
-			filepath=this->getProperPath(filepath);
-			this->setRecents(filepath);
-			this->multiFileList.push_back(filepath);
-			this->selectedFolder=filepath;
-			qDebug()<<"filepath"<<filepath;
-		
-}
-else
-{
-			filepath=this->currentFolder+"/"+filepathEdit.text();
-			filepath=this->getProperPath(filepath);
-			this->setRecents(filepath);
-			this->multiFileList.push_back(filepath);
-}
+			filepath=this->realFilePath;
+			if(QFileInfo(filepath).isDir()==false)
+				{
+					if(this->recentFilesPath.compare(this->localWD)==0)
+						{
+							this->multiFileList.push_back(QFileInfo(QString("%1").arg(filepath)).canonicalFilePath());
+						}
+					else
+						{
+							this->multiFileList.push_back(filepath);
+						}
+					QFile f(filepath);
+					recentfiles=QString("%1/%2").arg(this->recentFilesPath).arg(QFileInfo(filepath).fileName());
+					f.link(recentfiles);
+					f.setFileName(this->realFolderPath);
+					recentfiles=QString("%1/%2").arg(this->recentFoldersPath).arg(QFileInfo(this->realFolderPath).fileName());
+					f.link(recentfiles);
+				}
 		}
 
 	prefs.setValue("choosersize",this->dialogWindow.saveGeometry());
 
-	switch(this->dialogType)
-		{
-			case chooserDialogType::openDialog:
-				this->setLast(this->rawPath);
-				prefs.setValue("lastloadfolder",QFileInfo(this->rawPath).path());
-				break;				
-			case chooserDialogType::saveDialog:
-				prefs.setValue("lastsavefolder",this->currentFolder);
-				break;
-			case chooserDialogType::folderDialog:
-				prefs.setValue("lastloadfolder",this->selectedFolder);
-				break;
-		}
-
-	this->rawPath+="/"+this->selectedFileName;
+	if(this->saveDialog==true)
+		prefs.setValue("lastsavefolder",this->localWD);
+	else
+		prefs.setValue("lastloadfolder",this->localWD);
 
 	this->setFavs();
 	this->valid=true;
-}
-
-void chooserDialogClass::setRecents(QString str)
-{
-	QString	tstr=this->getProperPath(str);
-	if(QFileInfo(tstr).isDir()==true)
-		{
-			QFile	recentfolder(tstr);
-			QString	recent=QString("%1/%2").arg(this->recentFoldersPath).arg(QFileInfo(tstr).fileName());
-			recentfolder.link(recent);
-		}
-	else
-		{
-			QFile	recentfile(tstr);
-			QFile	recentfolder(QFileInfo(tstr).path());
-			QString	recent=QString("%1/%2").arg(this->recentFilesPath).arg(QFileInfo(tstr).fileName());
-
-			recentfile.link(recent);
-			recent=QString("%1/%2").arg(this->recentFoldersPath).arg(QFileInfo(tstr).dir().dirName());
-			recentfolder.link(recent);
-		}
-}
-
-void chooserDialogClass::setLast(QString str)
-{
-	QSettings	prefs("KDHedger","ChooserDialog");
-	QString		tstr=this->getProperPath(str);
-
-	if(this->dialogType==chooserDialogType::openDialog)
-		prefs.setValue("lastloadfolder",QFileInfo(tstr).path());
 }
 
 void chooserDialogClass::addFileTypes(QString types)
@@ -520,66 +481,67 @@ void chooserDialogClass::buildMainGui(void)
 	QHBoxLayout	*hlayout=new QHBoxLayout;
 	QSplitter	*splitter=new QSplitter(Qt::Horizontal,&this->dialogWindow);
 
-	switch(this->dialogType)
-		{
-			case chooserDialogType::openDialog:
-				this->dialogWindow.setWindowTitle("Open File");
-				break;
-			case chooserDialogType::saveDialog:
-				this->dialogWindow.setWindowTitle("Save File");
-				break;
-			case chooserDialogType::folderDialog:
-				this->dialogWindow.setWindowTitle("Select Folder");
-				break;
-		}
+	this->dialogWindow.setWindowTitle("Select File");
 
 	this->fileListModel=new QStandardItemModel(0,1);
     this->fileList.setModel(this->fileListModel);
+
 	QObject::connect(&this->fileList,&QListView::clicked,[this](const QModelIndex &index)
 		{
-			if(QFileInfo( this->rawPath+"/"+index.data(Qt::UserRole).toString()).isFile()==true)
-				this->filepathEdit.setText(index.data(Qt::UserRole).toString());
-			else
-				this->filepathEdit.setText("");
-
 			this->selectItem(index);
 		});
 
-	//this->fileList.setStyleSheet(QString("QFrame {border-width: 1px;border-color: palette(dark); border-style: solid;}"));
+	this->fileList.setStyleSheet(QString("QFrame {border-width: 1px;border-color: palette(dark); border-style: solid;}"));
 	QObject::connect(&this->fileList,&QListView::doubleClicked,[this](const QModelIndex &index)
 		{
-				if(index.data(Qt::UserRole).toString().compare("..")==0)
-					{
-						this->rawPath=QFileInfo(this->rawPath).path();
-					}
-				else
-					{
-						this->rawPath+="/"+index.data(Qt::UserRole).toString();
-						this->rawPath=this->getProperPath(this->rawPath);
+			QString t;
+			QString dirp;
+			if((this->localWD.compare("/")==0) && (index.data(Qt::UserRole).toString().compare("..")==0))
+				{
+					this->localWD="/";
+					return;
+				}
 
-						if(QFileInfo(this->rawPath).isFile()==true)
-							{
-								if(this->dialogType==chooserDialogType::saveDialog)
-									{
-										if((QFileInfo(this->rawPath).exists()==true) && (this->overwriteWarning==true) && (this->saveDialog==true))
-											{
-												QMessageBox::StandardButton reply=QMessageBox::warning(&this->dialogWindow,"File exists",QString("File '%1' exists! Overwrite?").arg(this->rawPath),QMessageBox::Yes|QMessageBox::No);
-												if(reply==QMessageBox::No)
-													{
-														this->rawPath=this->currentFolder;
-														this->setFileList();
-														return;
-													}
-											}
-									}
+			if(this->localWD.compare("/")==0)
+				t=this->localWD+index.data(Qt::UserRole).toString();
+			else
+				t=this->localWD+"/"+index.data(Qt::UserRole).toString();
 
-								this->setFileData();
-								this->dialogWindow.hide();
-							}
-					}
-				
-				this->setFileList();
-				return;
+			if(QFileInfo(t).isDir()==true)
+				{
+					if(this->recentFoldersPath.compare(this->localWD)==0)
+						{
+							t=QFileInfo(QString("%1/%2").arg(this->recentFoldersPath).arg(index.data(Qt::UserRole).toString())).canonicalFilePath();
+						}
+					dirp=QString("%1").arg(t);
+					dirp=QDir::cleanPath(dirp);
+					if(this->saveDialog==false)
+						this->filepathEdit.setText(dirp);
+
+					this->localWD=dirp;
+					this->setFileList();
+					if(this->filepathEdit.text().isEmpty()==false)
+						this->selectedFilePath=this->filepathEdit.text();
+				}
+			else
+				{
+					if(this->recentFilesPath.compare(this->localWD)==0)
+						{
+							this->localWD=QFileInfo(QString("%1/%2").arg(this->recentFilesPath).arg(index.data(Qt::UserRole).toString())).canonicalFilePath();
+							this->filepathEdit.setText(QFileInfo(QString("%1/%2").arg(this->recentFilesPath).arg(index.data(Qt::UserRole).toString())).canonicalFilePath());
+							this->localWD=QFileInfo(QString("%1").arg(this->filepathEdit.text())).canonicalPath();
+						}
+
+					if((QFileInfo(this->selectedFilePath).exists()==true) && (this->overwriteWarning==true) && (this->saveDialog==true))
+						{
+							QMessageBox::StandardButton reply=QMessageBox::question(&this->dialogWindow,"File exists","File exists! Overwrite?",QMessageBox::Yes|QMessageBox::No);
+							if(reply==QMessageBox::No)
+								return;
+						}
+
+					this->setFileData();
+					this->dialogWindow.hide();
+				}
 		});
 
 //sidelist
@@ -596,14 +558,15 @@ void chooserDialogClass::buildMainGui(void)
 			if(map.find(Qt::StatusTipRole)!=map.end())
 				{
 					QString str=map[Qt::StatusTipRole].toString();
-					this->rawPath=QFileInfo(str).absoluteFilePath();
+					this->localWD=QFileInfo(str).absoluteFilePath();
 				}
 			else
-				this->rawPath=index.data(Qt::UserRole).toString();
-			this->rawPath=index.data(Qt::UserRole).toString();
+				this->localWD=index.data(Qt::UserRole).toString();
 			this->setFileList();
 			if(this->saveDialog==false)
 				this->filepathEdit.setText("");
+			if(this->filepathEdit.text().isEmpty()==false)
+				this->selectedFilePath=this->filepathEdit.text();
 		});
 
 	this->sideListModel=new QStandardItemModel(0,1);
@@ -652,17 +615,14 @@ void chooserDialogClass::buildMainGui(void)
 	controlsvlayout->addWidget(&this->filepathEdit);
 	QObject::connect(&this->filepathEdit,&QLineEdit::textChanged,[this](const QString &text)
 		{
-			////this->selectedFilePath=text;
+			this->selectedFilePath=text;
 		});
 
-	if(this->dialogType!=chooserDialogType::folderDialog)
+	controlsvlayout->addWidget(&this->fileTypes);
+	QObject::connect(&this->fileTypes,&QComboBox::currentTextChanged,[this](const QString &text)
 		{
-			controlsvlayout->addWidget(&this->fileTypes);
-			QObject::connect(&this->fileTypes,&QComboBox::currentTextChanged,[this](const QString &text)
-				{
-					this->setFileList();
-				});
-		}
+			this->setFileList();
+		});
 
 	hlayout=new QHBoxLayout;
 	QPushButton *cancel=new QPushButton("Cancel");
@@ -691,19 +651,15 @@ void chooserDialogClass::buildMainGui(void)
 	QObject::connect(newfolder,&QPushButton::clicked,[this]()
 		{
 			bool		ok;
-			int		cnt=1;
-			QString	nfname="New Folder";
-			if(QFileInfo::exists(QString("%1/%2").arg(this->currentFolder).arg(nfname)))
-				{
-					while(QFileInfo::exists(QString("%1/%2-%3").arg(this->currentFolder).arg(nfname).arg(cnt)))
-						cnt++;
-					nfname=QString("%1-%2").arg(nfname).arg(cnt);
-				}
-     		QString	text=QInputDialog::getText(&this->dialogWindow,"New Folder","New folder name",QLineEdit::Normal,nfname,&ok);
+     		QString	text=QInputDialog::getText(&this->dialogWindow,"New Folder","New folder name",QLineEdit::Normal,"New Folder",&ok);
 			if(ok==true)
 				{
-					QDir dirp(this->currentFolder);
+					QString	dirpath;
+					QDir dirp(this->localWD);
 					dirp.mkdir(text);
+					this->localWD=QString("%1/%2").arg(this->localWD).arg(text);
+					if(this->saveDialog==false)
+						this->filepathEdit.setText(this->localWD);
 					this->setFileList();
 				}
 		});
@@ -716,110 +672,46 @@ void chooserDialogClass::buildMainGui(void)
 		});
 
 	QPushButton *apply;
-	//if(this->saveDialog==false)
-//		apply=new QPushButton("Open");
-//	else
-//		apply=new QPushButton("Save");
-	switch(this->dialogType)
-		{
-			case chooserDialogType::openDialog:
-				apply=new QPushButton("Open");
-				break;				
-			case chooserDialogType::saveDialog:
-				apply=new QPushButton("Save");
-				break;
-			case chooserDialogType::folderDialog:
-				apply=new QPushButton("Select");
-				break;
-		}
+	if(this->saveDialog==false)
+		apply=new QPushButton("Open");
+	else
+		apply=new QPushButton("Save");
 	apply->setIcon(QIcon::fromTheme("dialog-ok"));
 	apply->setDefault(true);
 
 	QObject::connect(apply,&QPushButton::clicked,[this]()
 		{
-			switch(this->dialogType)
+			if(this->filepathEdit.text().isEmpty()==true)
+				return;
+			if(QFileInfo(this->selectedFilePath).isDir()==true)
 				{
-					case chooserDialogType::openDialog:
-						this->lastSelectedFilePath=this->getProperPath(this->lastSelectedFilePath);
-
-						if(QFileInfo(this->lastSelectedFilePath).isDir()==true)
-							{
-								this->currentFolder=this->lastSelectedFilePath;
-								this->rawPath=this->lastSelectedFilePath;
-								this->setFileList();	
-							}
-						else
-							{
-								this->rawPath=this->lastSelectedFilePath;
-								this->setFileData();
-								this->dialogWindow.hide();
-							}
-						break;				
-					case chooserDialogType::saveDialog:
-						{
-							this->lastSelectedFilePath=this->getProperPath(this->lastSelectedFilePath);
-							if(this->lastSelectedFilePath.isEmpty()==true)
-								{
-									this->lastSelectedFilePath=this->currentFolder+"/"+this->filepathEdit.text();
-									this->rawPath=this->lastSelectedFilePath;
-								}
-							
-							if((QFileInfo(this->lastSelectedFilePath).exists()==true) && (this->overwriteWarning==true) && (this->saveDialog==true))
-								{
-									QMessageBox::StandardButton reply=QMessageBox::warning(&this->dialogWindow,"File exists",QString("File '%1' exists! Overwrite?").arg(this->lastSelectedFilePath),QMessageBox::Yes|QMessageBox::No);
-									if(reply==QMessageBox::No)
-										return;
-								}
-							this->setFileData();
-							this->dialogWindow.hide();
-						}
-						break;
-
-					case chooserDialogType::folderDialog:
-						this->setFileData();
-						this->setRecents(this->selectedFolder);
-						this->dialogWindow.hide();
-						break;
+					this->localWD=selectedFilePath;
+					this->setFileList();	
 				}
-		return;
-			//if(this->filepathEdit.text().isEmpty()==true)
-			//	return;
-//
-//			if((QFileInfo(this->selectedFilePath).isDir()==true) && (this->dialogType!=chooserDialogType::folderDialog))
-//				{
-//					this->localWD=selectedFilePath;
-//					this->setFileList();	
-//				}
-//			else
-//				{
-//					QString tp;
-//					if(this->filepathEdit.text().isEmpty()==true)
-//						return;
-//					if(this->filepathEdit.text().at(0)=='/')
-//						{
-//							tp=this->filepathEdit.text();
-//							//this->localWD=QFileInfo(tp).dir().absoluteFilePath();
-//							//QDir
-//							//this->localWD=QFileInfo(tp).dir().canonicalPath();
-//							this->localWD=QFileInfo(tp).dir().absolutePath();
-//							//QDir td=QFileInfo(tp).dir();
-//							//qDebug()<<td.canonicalPath()<<td.absolutePath();
-//						}
-//					else		
-//						{
-//							tp=QString("%1/%2").arg(this->localWD).arg(this->filepathEdit.text());
-//						}
-//
-//					if((QFileInfo(tp).exists()==true) && (this->overwriteWarning==true) && (this->saveDialog==true))
-//						{
-//							QMessageBox::StandardButton reply=QMessageBox::question(&this->dialogWindow,"File exists","File exists! Overwrite?",QMessageBox::Yes|QMessageBox::No);
-//							if(reply==QMessageBox::No)
-//								return;
-//						}
-//					this->setFileData();
-//					qDebug()<<"raw path="<<this->rawPath;
-//					this->dialogWindow.hide();
-//				}
+			else
+				{
+					QString tp;
+					if(this->filepathEdit.text().isEmpty()==true)
+						return;
+					if(this->filepathEdit.text().at(0)=='/')
+						{
+							tp=this->filepathEdit.text();
+							this->localWD=QFileInfo(tp).dir().canonicalPath();
+						}
+					else		
+						{
+							tp=QString("%1/%2").arg(this->localWD).arg(this->filepathEdit.text());
+						}
+
+					if((QFileInfo(tp).exists()==true) && (this->overwriteWarning==true) && (this->saveDialog==true))
+						{
+							QMessageBox::StandardButton reply=QMessageBox::question(&this->dialogWindow,"File exists","File exists! Overwrite?",QMessageBox::Yes|QMessageBox::No);
+							if(reply==QMessageBox::No)
+								return;
+						}
+					this->setFileData();
+					this->dialogWindow.hide();
+				}
 		});
 
 	hlayout->addWidget(cancel);
@@ -841,10 +733,9 @@ void chooserDialogClass::buildMainGui(void)
 		this->filepathEdit.setText("");
 	else
 		{
-//			//this->selectedFilePath=this->localWD+"/"+this->saveName;
-//			this->selectedFilePath=this->rawPath+"/"+this->saveName;
-//			this->selectedFileName=this->saveName;
-//			this->filepathEdit.setText(this->saveName);
+			this->selectedFilePath=this->localWD+"/"+this->saveName;
+			this->selectedFileName=this->saveName;
+			this->filepathEdit.setText(this->saveName);
 		}
 	this->fileList.setDragEnabled(true);
 	this->sideList.setAcceptDrops(true);
@@ -867,45 +758,30 @@ chooserDialogClass::chooserDialogClass(chooserDialogType type,QString name,QStri
 	if(type==chooserDialogType::saveDialog)
 		{
 			this->saveDialog=true;
-			
 			if(name.isEmpty()==false)
 				this->saveName=name;
 			else
 				this->saveName="Untitled";
 			if(startfolder.isEmpty()==true)
-				//this->localWD=prefs.value("lastsavefolder").toString();
-				this->rawPath=prefs.value("lastsavefolder").toString();
+				this->localWD=prefs.value("lastsavefolder").toString();
 			else
-				//this->localWD=startfolder;
-				this->rawPath=startfolder;
+				this->localWD=startfolder;
 		}
 
-	if(type==chooserDialogType::openDialog)
+	if(type==chooserDialogType::loadDialog)
 		{
 			if(name.isEmpty()==true)
-				this->rawPath=prefs.value("lastloadfolder").toString();
+				this->localWD=prefs.value("lastloadfolder").toString();
 			else
-				this->rawPath=name;
+				this->localWD=name;
+
 
 			this->saveDialog=false;
 			this->saveName="";
 		}
 
-	if(type==chooserDialogType::folderDialog)
-		{
-			if(name.isEmpty()==true)
-				this->rawPath=prefs.value("lastloadfolder").toString();
-			else
-				this->rawPath=name;
-
-			this->saveDialog=false;
-			this->saveName="";
-		}
-
-	this->dialogType=type;
-
-	if((this->rawPath.isEmpty()==true) || (QFileInfo(this->rawPath).exists()==false))
-		this->rawPath="/";
+	if((this->localWD.isEmpty()==true) || (QFileInfo(this->localWD).exists()==false))
+		this->localWD="/";
 
 	this->buildMainGui();
 
@@ -915,15 +791,4 @@ chooserDialogClass::chooserDialogClass(chooserDialogType type,QString name,QStri
 	system(command.toStdString().c_str());
 	command=QString("cd %1 >/dev/null;ls -t1|tail -n +%2| xargs -I {} rm '{}'").arg(this->recentFoldersPath).arg(this->maxRecents);
 	system(command.toStdString().c_str());
-}
-
-QString chooserDialogClass::getProperPath(QString str)
-{
-	if(QFileInfo(str).isSymLink())
-		{
-			if(str.startsWith(this->recentFilesPath) || str.startsWith(this->recentFoldersPath))
-				return(QFileInfo(str).symLinkTarget());
-		}
-
-	return(str);
 }
