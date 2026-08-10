@@ -1,0 +1,136 @@
+
+#include <wordexp.h>
+#include "QT_RunExternalProc.h"
+
+QT_RunExternalProc::~QT_RunExternalProc()
+{
+}
+
+QT_RunExternalProc::QT_RunExternalProc()
+{
+}
+
+void QT_RunExternalProc::setStdErr(stdErrOption opt,QString path)
+{
+	this->stdErrwhat=opt;
+	this->stdErrFile=path;
+}
+
+void QT_RunExternalProc::setStdErrFileOption(QIODeviceBase::OpenModeFlag opt)
+{
+	this->append=opt;
+}
+
+QString QT_RunExternalProc::runCommandsInShell(QString commands)
+{
+	QString retstr="";
+	FILE		*fp=NULL;
+	char		line[1024];
+
+	fp=popen(qPrintable(commands),"r");
+	if(fp!=NULL)
+		{
+			while(fgets(line,1024,fp))
+				{
+					retstr+=line;
+				}
+			pclose(fp);
+		}
+	return(retstr);
+}
+
+QString QT_RunExternalProc::runCommands(void)
+{
+	QString	retstr;
+	int		last;
+
+	for(int j=0;j<this->commandArgs.count();j++)
+		{
+			QProcess *p=new QProcess;
+			QString app=this->commandArgs.at(j).at(0);
+			QStringList sl=this->commandArgs.at(j);
+			sl.removeAt(0);
+			p->setProgram(app);
+			p->setArguments(sl);
+			p->setProcessChannelMode(QProcess::SeparateChannels);
+			if(this->stdErrwhat==stdErrOption::toFile)
+				p->setStandardErrorFile(this->stdErrFile,this->append);
+			if(this->stdErrwhat==stdErrOption::multiToFile)
+				p->setStandardErrorFile(QString("%1.proc-%2").arg(this->stdErrFile).arg(j),this->append);
+
+			this->procs.push_back(p);
+		}
+
+	for(int j=0;j<this->procs.count()-1;j++)
+		{
+			this->procs.at(j)->setStandardOutputProcess(this->procs.at(j+1));
+			QObject::connect(this->procs.at(j), &QProcess::readyReadStandardError, [this,j]()
+				{
+					if(this->stdErrwhat==stdErrOption::output)
+						qDebug().noquote() << this->procs.at(j)->readAllStandardError();
+				});
+		}
+
+	for(int j=this->procs.count()-1;j>-1;j--)
+		{
+			this->procs.at(j)->start();
+			if(this->procs.at(j)->state()==QProcess::Starting)
+				this->procs.at(j)->waitForStarted();
+		}
+
+	last=this->procs.count()-1;
+	QObject::connect(this->procs.at(last), &QProcess::readyReadStandardError, [this,last]()
+		{
+			if(this->stdErrwhat==stdErrOption::output)
+				qDebug().noquote() << this->procs.at(last)->readAllStandardError();
+		});
+
+	QObject::connect(this->procs.at(last), &QProcess::readyReadStandardOutput,[this,last,&retstr]()
+		{
+			QByteArray out=this->procs.at(last)->readAllStandardOutput();
+			retstr=out;
+		}); 
+
+	for(int j=0;j<this->procs.count();j++)
+		{
+			if(this->procs.at(j)->state()==QProcess::Running)
+				this->procs.at(j)->waitForFinished();
+		}
+
+	for(int j=0;j<this->procs.count();j++)
+		delete this->procs.at(j);
+
+	this->procs.clear();
+	return(retstr);
+}
+
+bool QT_RunExternalProc::setCommands(QStringList sl)
+{
+	QStringList	commands=sl;
+	this->commandArgs.clear();
+
+	for(int j=0;j<sl.count();j++)
+		{
+			wordexp_t	array;
+			QStringList	strarg;
+			int			retval=-1;
+
+			retval=wordexp(qPrintable(sl.at(j)),&array,WRDE_SHOWERR);
+			if(retval!=0)
+				{
+					qDebug()<<"Error in string:"<<sl.at(j);
+					return(false);
+				}
+
+			strarg.clear();
+			for(size_t i=0; i<array.we_wordc; i++)
+				{
+				//	qDebug()<<array.we_wordv[i];
+					strarg<<array.we_wordv[i];
+				}
+
+			wordfree(&array); 
+			this->commandArgs.push_back(strarg);
+		}
+	return(true);
+}
