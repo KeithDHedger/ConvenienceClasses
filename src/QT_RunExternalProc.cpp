@@ -10,15 +10,17 @@ QT_RunExternalProc::QT_RunExternalProc()
 {
 }
 
-void QT_RunExternalProc::setStdErr(stdErrOption opt,QString path)
+void QT_RunExternalProc::setStdErrFileOption(stdErrOption what,QString path,QIODeviceBase::OpenModeFlag opt)
 {
-	this->stdErrwhat=opt;
-	this->stdErrFile=path;
+	this->stdErrwhat=what;
+	this->stdErrMode=opt;
+	this->stdErrFilePath=path;
 }
 
-void QT_RunExternalProc::setStdErrFileOption(QIODeviceBase::OpenModeFlag opt)
+void QT_RunExternalProc::setStdOutFileOption(QString path,QIODeviceBase::OpenModeFlag opt)
 {
-	this->append=opt;
+	this->stdOutMode=opt;
+	this->stdOutFilePath=path;
 }
 
 QString QT_RunExternalProc::runCommandsInShell(QString commands)
@@ -41,7 +43,7 @@ QString QT_RunExternalProc::runCommandsInShell(QString commands)
 
 QString QT_RunExternalProc::runCommands(void)
 {
-	QString	retstr;
+	QString	retstr="";
 	int		last;
 
 	for(int j=0;j<this->commandArgs.count();j++)
@@ -54,12 +56,16 @@ QString QT_RunExternalProc::runCommands(void)
 			p->setArguments(sl);
 			p->setProcessChannelMode(QProcess::SeparateChannels);
 			if(this->stdErrwhat==stdErrOption::toFile)
-				p->setStandardErrorFile(this->stdErrFile,this->append);
+				p->setStandardErrorFile(this->stdErrFilePath,this->stdErrMode);
 			if(this->stdErrwhat==stdErrOption::multiToFile)
-				p->setStandardErrorFile(QString("%1.proc-%2").arg(this->stdErrFile).arg(j),this->append);
+				p->setStandardErrorFile(QString("%1.proc-%2").arg(this->stdErrFilePath).arg(j),this->stdErrMode);
 
 			this->procs.push_back(p);
 		}
+
+	last=this->procs.count()-1;
+	if(this->stdOutFilePath.isEmpty()==false)
+		this->procs.at(last)->setStandardOutputFile(this->stdOutFilePath,this->stdOutMode);
 
 	for(int j=0;j<this->procs.count()-1;j++)
 		{
@@ -74,11 +80,9 @@ QString QT_RunExternalProc::runCommands(void)
 	for(int j=this->procs.count()-1;j>-1;j--)
 		{
 			this->procs.at(j)->start();
-			if(this->procs.at(j)->state()==QProcess::Starting)
-				this->procs.at(j)->waitForStarted();
+			this->procs.at(j)->waitForStarted();
 		}
 
-	last=this->procs.count()-1;
 	QObject::connect(this->procs.at(last), &QProcess::readyReadStandardError, [this,last]()
 		{
 			if(this->stdErrwhat==stdErrOption::output)
@@ -88,14 +92,11 @@ QString QT_RunExternalProc::runCommands(void)
 	QObject::connect(this->procs.at(last), &QProcess::readyReadStandardOutput,[this,last,&retstr]()
 		{
 			QByteArray out=this->procs.at(last)->readAllStandardOutput();
-			retstr=out;
+			retstr+=out;
 		}); 
 
-	for(int j=0;j<this->procs.count();j++)
-		{
-			if(this->procs.at(j)->state()==QProcess::Running)
-				this->procs.at(j)->waitForFinished();
-		}
+	for(int j=this->procs.count()-1;j>-1;j--)
+		this->procs.at(j)->waitForFinished();
 
 	for(int j=0;j<this->procs.count();j++)
 		delete this->procs.at(j);
@@ -125,7 +126,7 @@ bool QT_RunExternalProc::setCommands(QStringList sl)
 			strarg.clear();
 			for(size_t i=0; i<array.we_wordc; i++)
 				{
-				//	qDebug()<<array.we_wordv[i];
+					//qDebug()<<array.we_wordv[i];
 					strarg<<array.we_wordv[i];
 				}
 

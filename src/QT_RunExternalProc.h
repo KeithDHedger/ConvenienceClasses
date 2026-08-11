@@ -12,18 +12,20 @@ class QT_RunExternalProc
 		QT_RunExternalProc();
 		~QT_RunExternalProc();
 
-
 		QString						runCommands(void);
 		QString						runCommandsInShell(QString commands);
 		bool							setCommands(QStringList sl);
-		void							setStdErr(stdErrOption opt,QString path="");
-		void							setStdErrFileOption(QIODeviceBase::OpenModeFlag opt);
+
+		void							setStdErrFileOption(stdErrOption what,QString path="",QIODeviceBase::OpenModeFlag opt=QIODeviceBase::Append);
+		void							setStdOutFileOption(QString path,QIODeviceBase::OpenModeFlag opt=QIODeviceBase::Truncate);
 
 	private:
 		QVector<QStringList>			commandArgs;
 		QVector<QProcess*>			procs;
-		QString						stdErrFile="";
-		QIODeviceBase::OpenModeFlag	append=QIODeviceBase::Append;
+		QString						stdErrFilePath="";
+		QString						stdOutFilePath="";
+		QIODeviceBase::OpenModeFlag	stdErrMode=QIODeviceBase::Append;
+		QIODeviceBase::OpenModeFlag	stdOutMode=QIODeviceBase::Truncate;
 		stdErrOption					stdErrwhat=stdErrOption::swallow;
 };
 

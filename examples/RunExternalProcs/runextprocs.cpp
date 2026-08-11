@@ -126,26 +126,53 @@ void runProcs(void)
 	QString				retstr;
 	QT_RunExternalProc	procs;
 
+procs.setStdErrFileOption(stdErrOption::output);
+QString folders="/home/keithhedger/Projects/DevProjects/KKEditQT/KKEditQT/src/*";
+QString tags="";
+//QStringList tsl=QStringList()<<QString("%1/ctags -x %2 %3").arg("/bin").arg("").arg(folders)<<QString("%1/sort").arg("/bin")<<QString("%1/awk '{print $1 \" \" $2 \" \" $3 \" \" $4}'").arg("/bin");
+QStringList tsl=QStringList()<<QString("ctags -x -f - /home/keithhedger/Projects/DevProjects/KKEditQT/KKEditQT/src/*")<<"sort"<<QString("awk '{print $1 \" \" $2 \" \" $3 \" \" $4}'");
+
+
+qDebug().noquote()<<tsl;
+
+
+	//if(procs.setCommands(QStringList()<<QString("%1/ctags -x %2 %3").arg(this->realBinDir).arg(this->ctagsExlusions).arg(folders)<<QString("%1/sort").arg(this->realBinDir)<<QString("%1/awk '{print $1 \" \" $2 \" \" $3 \" \" $4}'") .arg(this->realBinDir) )==true)
+	if(procs.setCommands(tsl)==true)
+			tags=procs.runCommands();//.split('\n',Qt::SkipEmptyParts);
+
+qDebug().noquote()<<tags;
+
+return;
 	//procs.setStdErr(stdErrOption::toFile,"/tmp/error.log");
 	//procs.setStdErr(stdErrOption::output);
-	//procs.setStdErrFileOption(QIODeviceBase::Truncate);
+	//procs.setStdErrFileOption(stdErrOption::toFile,"/tmp/error.log");
+	//procs.setStdErrFileOption(stdErrOption::multiToFile,"/tmp/error.log");
 	if(procs.setCommands(QStringList()<<"touch /zzz"<<"ls /root ~"<<"cat - /etc/fstab"<<"sort -u"<<"tac -")==true)
 	//if(procs.setCommands(QStringList()<<"echo -e \"$(stat /tmp)\"")==true)
 		{
 			retstr=procs.runCommands();
 			printf(">>>>>%s<<<<<\n",qPrintable(retstr));
 		}
-
 	qDebug()<<"---------------------------";
-	//procs.setStdErrFileOption(QIODeviceBase::Append);
-	procs.setStdErr(stdErrOption::output);
+return;
+	procs.setStdErrFileOption(stdErrOption::output);
 	if(procs.setCommands(QStringList()<<"ls / /xcxzczxcz")==true)
 		{
 			retstr=procs.runCommands();
 			printf(">>>>>%s<<<<<\n",qPrintable(retstr));
 		}
 
-	retstr=procs.runCommandsInShell("ls / /root 2>/tmp/error.log|tee /tmp/what|tac -|tee -a /tmp/what");
+	qDebug()<<"++++++++++++++++++++++++++++++++";
+	procs.setStdErrFileOption(stdErrOption::toFile,"/tmp/error1.log",QIODeviceBase::Append);
+	procs.setStdOutFileOption("/tmp/log.txt",QIODeviceBase::Append);
+	if(procs.setCommands(QStringList()<<"ls ${HOME} $(pwd) / /xcxzczxcz")==true)
+		{
+			retstr=procs.runCommands();
+		}
+
+	qDebug()<<"=============================";
+
+	retstr=procs.runCommandsInShell("ls / /root 2>/tmp/error2.log|tee /tmp/whatis|tac -|tee -a /tmp/what");
 	printf("--->>>>>%s<<<<<---\n",qPrintable(retstr));
 }
 
