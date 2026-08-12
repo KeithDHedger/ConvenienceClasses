@@ -126,23 +126,45 @@ void runProcs(void)
 	QString				retstr;
 	QT_RunExternalProc	procs;
 
-procs.setStdErrFileOption(stdErrOption::output);
-QString folders="/home/keithhedger/Projects/DevProjects/KKEditQT/KKEditQT/src/*";
-QString tags="";
-//QStringList tsl=QStringList()<<QString("%1/ctags -x %2 %3").arg("/bin").arg("").arg(folders)<<QString("%1/sort").arg("/bin")<<QString("%1/awk '{print $1 \" \" $2 \" \" $3 \" \" $4}'").arg("/bin");
-QStringList tsl=QStringList()<<QString("ctags -x -f - /home/keithhedger/Projects/DevProjects/KKEditQT/KKEditQT/src/*")<<"sort"<<QString("awk '{print $1 \" \" $2 \" \" $3 \" \" $4}'");
+	procs.setStdErrFileOption(stdErrOption::output);
+	procs.readByLine=true;
+	procs.connectCB([&procs](QString msg)
+		{
+			qDebug()<<QString("got:%1").arg(msg);
+			//sleep(1);
+		});
 
+qDebug()<<"in sync...";
+procs.runCommandsInShell("echo \"starting ....\";sleep 4;echo done");
+qDebug()<<"finished ...";
 
-qDebug().noquote()<<tsl;
+procs.sync=false;
+qDebug()<<"in async...";
+procs.runCommandsInShell("echo \"starting ....\";sleep 8;echo done");
+qDebug()<<"finished ...";
 
-
-	//if(procs.setCommands(QStringList()<<QString("%1/ctags -x %2 %3").arg(this->realBinDir).arg(this->ctagsExlusions).arg(folders)<<QString("%1/sort").arg(this->realBinDir)<<QString("%1/awk '{print $1 \" \" $2 \" \" $3 \" \" $4}'") .arg(this->realBinDir) )==true)
-	if(procs.setCommands(tsl)==true)
-			tags=procs.runCommands();//.split('\n',Qt::SkipEmptyParts);
-
-qDebug().noquote()<<tags;
 
 return;
+
+	QString tags="";
+	QStringList tsl=QStringList()<<QString("ctags -x ../../src/*")<<"sort"<<QString("awk '{print $1 \" \" $2 \" \" $3 \" \" $4}'");
+
+	procs.readByLine=true;
+	procs.connectCB([&procs](QString msg)
+		{
+			qDebug()<<QString("got:%1").arg(msg);
+			//sleep(1);
+		});
+
+	if(procs.setCommands(tsl)==true)
+		tags=procs.runCommands();//.split('\n',Qt::SkipEmptyParts);
+
+	retstr=procs.runCommandsInShell("ls / /root 2>/tmp/error2.log|tee /tmp/whatis|tac -|tee -a /tmp/what;cd /tmp;ls");
+return;
+	//printf(">>>%s<<<\n",qPrintable(tags));
+	//qDebug().noquote()<<tags.split('\n',Qt::SkipEmptyParts);
+
+	procs.clearCallbacks();
 	//procs.setStdErr(stdErrOption::toFile,"/tmp/error.log");
 	//procs.setStdErr(stdErrOption::output);
 	//procs.setStdErrFileOption(stdErrOption::toFile,"/tmp/error.log");

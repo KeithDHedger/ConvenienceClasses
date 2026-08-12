@@ -4,6 +4,7 @@
 #include <QtWidgets>
 
 #include "config.h"
+#include <unistd.h>
 
 #include "QT_RunExternalProc.h"
 

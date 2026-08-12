@@ -29,12 +29,20 @@ QString QT_RunExternalProc::runCommandsInShell(QString commands)
 	FILE		*fp=NULL;
 	char		line[1024];
 
+	if(this->sync==false)
+		{
+			system(qPrintable(QString("(%1) &").arg(commands)));
+			return("");
+		}
+
 	fp=popen(qPrintable(commands),"r");
 	if(fp!=NULL)
 		{
 			while(fgets(line,1024,fp))
 				{
 					retstr+=line;
+					if(this->callbacks.count()>0)
+						this->triggerCallbacks(line);
 				}
 			pclose(fp);
 		}
@@ -91,8 +99,24 @@ QString QT_RunExternalProc::runCommands(void)
 
 	QObject::connect(this->procs.at(last), &QProcess::readyReadStandardOutput,[this,last,&retstr]()
 		{
-			QByteArray out=this->procs.at(last)->readAllStandardOutput();
-			retstr+=out;
+			if(this->readByLine==true)
+				{
+					while(this->procs.at(last)->canReadLine())
+						{
+							QString line=procs.at(last)->readLine();
+							retstr+=line;
+							line.chop(1);
+							if(this->callbacks.count()>0)
+								this->triggerCallbacks(line);
+						}
+				}
+			else
+				{
+					QByteArray out=this->procs.at(last)->readAllStandardOutput();
+					if(this->callbacks.count()>0)
+						this->triggerCallbacks(out);
+					retstr+=out;
+				}
 		}); 
 
 	for(int j=this->procs.count()-1;j>-1;j--)
@@ -134,4 +158,20 @@ bool QT_RunExternalProc::setCommands(QStringList sl)
 			this->commandArgs.push_back(strarg);
 		}
 	return(true);
+}
+
+void QT_RunExternalProc::connectCB(QT_REP_Callback cb)
+{
+	this->callbacks.push_back(cb);
+}
+
+void QT_RunExternalProc::triggerCallbacks(QString txt)
+{
+	for(int j=0;j<this->callbacks.size();j++)
+		this->callbacks.at(j)(txt);
+}
+
+void QT_RunExternalProc::clearCallbacks(void)
+{
+	this->callbacks.clear();
 }
