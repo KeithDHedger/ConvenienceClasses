@@ -16,6 +16,7 @@ class QT_RunExternalProc
 
 		bool							readByLine=false;
 		bool							sync=true;
+		qint64						lastBGPID;
 
 		QString						runCommands(void);
 		QString						runCommandsInShell(QString commands);
@@ -35,6 +36,7 @@ class QT_RunExternalProc
 		QVector<QT_REP_Callback>		callbacks;
 		stdErrOption					stdErrwhat=stdErrOption::swallow;
 
+		void							fireAndForget(QString commands);
 		void							triggerCallbacks(QString txt);
 };
 

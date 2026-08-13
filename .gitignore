@@ -3,3 +3,4 @@ a.out
 *.o
 ignorelibleaks
 HOLD
+qt_runexternalproc

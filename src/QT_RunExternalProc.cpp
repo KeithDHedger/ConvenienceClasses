@@ -23,6 +23,11 @@ void QT_RunExternalProc::setStdOutFileOption(QString path,QIODeviceBase::OpenMod
 	this->stdOutFilePath=path;
 }
 
+void QT_RunExternalProc::fireAndForget(QString commands)
+{
+	QProcess::startDetached("sh",QStringList()<<"-c"<<commands,"",&this->lastBGPID);
+}
+
 QString QT_RunExternalProc::runCommandsInShell(QString commands)
 {
 	QString retstr="";
@@ -31,20 +36,21 @@ QString QT_RunExternalProc::runCommandsInShell(QString commands)
 
 	if(this->sync==false)
 		{
-			system(qPrintable(QString("(%1) &").arg(commands)));
-			return("");
+			this->fireAndForget(commands);
 		}
-
-	fp=popen(qPrintable(commands),"r");
-	if(fp!=NULL)
+	else
 		{
-			while(fgets(line,1024,fp))
+			fp=popen(qPrintable(commands),"r");
+			if(fp!=NULL)
 				{
-					retstr+=line;
-					if(this->callbacks.count()>0)
-						this->triggerCallbacks(line);
+					while(fgets(line,1024,fp))
+						{
+							retstr+=line;
+							if(this->callbacks.count()>0)
+								this->triggerCallbacks(line);
+						}
+					pclose(fp);
 				}
-			pclose(fp);
 		}
 	return(retstr);
 }

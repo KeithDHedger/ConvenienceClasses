@@ -62,7 +62,7 @@ fi
 g++ -g -Wall -I${PWD} -I${PWD}/../../src -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) ${PWD}/../../src/QT_RunExternalProc.cpp -fPIC "$0" -o ./qt_runexternalproc||exit 1
 $VALGRIND ./qt_runexternalproc "$@"
 retval=$?
-rm ./qt_runexternalproc
+#rm ./qt_runexternalproc
 exit $retval
 #endif
 
@@ -123,79 +123,104 @@ QMenu* setHelpMenu(QMenuBar *menubar)
 
 void runProcs(void)
 {
+	QMessageBox msgBox;
 	QString				retstr;
 	QT_RunExternalProc	procs;
+	int					ret;
 
-	procs.setStdErrFileOption(stdErrOption::output);
-	procs.readByLine=true;
-	procs.connectCB([&procs](QString msg)
+	msgBox.setText("Choose example");
+	msgBox.setInformativeText("runCommandsInShell [sync]\nrunCommandsInShell [async]\nrunCommands [piped]\nrunCommandsInShell [complex]\nrunCommands with errors and redirect stderr to file [errors]\nrunCommands with errors going to stderr [errors 2]\nrunCommands with errors going to mutiple error files [errors 3]");
+	msgBox.addButton("sync",QMessageBox::AcceptRole);
+	msgBox.addButton("async",QMessageBox::AcceptRole);
+	msgBox.addButton("piped",QMessageBox::AcceptRole);
+	msgBox.addButton("complex",QMessageBox::AcceptRole);
+	msgBox.addButton("errors",QMessageBox::AcceptRole);
+	msgBox.addButton("errors 2",QMessageBox::AcceptRole);
+	msgBox.addButton("errors 3",QMessageBox::AcceptRole);
+	ret=msgBox.exec();
+
+	switch(ret)
 		{
-			qDebug()<<QString("got:%1").arg(msg);
-			//sleep(1);
-		});
+			case 2:
+				{
+					procs.setStdErrFileOption(stdErrOption::output);
+					procs.readByLine=true;
+					procs.connectCB([&procs](QString msg)
+						{
+							qDebug()<<QString("got:%1").arg(msg);
+						});
+					qDebug()<<"Running sync...";
+					procs.runCommandsInShell("echo \"starting sync....\";ls;sleep 4;echo done sync");
+					qDebug()<<"Finished ...";
+				}
+				break;
+			case 3:
+					procs.setStdErrFileOption(stdErrOption::output);
+					procs.sync=false;
+					procs.connectCB([&procs](QString msg)
+						{
+							qDebug()<<QString("got:%1").arg(msg);
+						});
+					qDebug()<<"Running async...";
+					procs.runCommandsInShell("echo \"starting async....\";ls;sleep 120;echo done async");
+					qDebug()<<"pid"<<procs.lastBGPID;
+					qDebug()<<"Finished ...";
+				break;
+			case 4:
+				{
+					qDebug()<<"Running piped line by line";
+					QString tags="";
+					QStringList tsl=QStringList()<<QString("ctags -x ../../src/*")<<"sort"<<QString("awk '{print $1 \" \" $2 \" \" $3 \" \" $4}'");
+					procs.readByLine=true;
+					procs.connectCB([&procs](QString msg)
+						{
+							qDebug()<<QString("Read line:%1").arg(msg);
+							usleep(25000);
+						});
 
-qDebug()<<"in sync...";
-procs.runCommandsInShell("echo \"starting ....\";sleep 4;echo done");
-qDebug()<<"finished ...";
-
-procs.sync=false;
-qDebug()<<"in async...";
-procs.runCommandsInShell("echo \"starting ....\";sleep 8;echo done");
-qDebug()<<"finished ...";
-
-
-return;
-
-	QString tags="";
-	QStringList tsl=QStringList()<<QString("ctags -x ../../src/*")<<"sort"<<QString("awk '{print $1 \" \" $2 \" \" $3 \" \" $4}'");
-
-	procs.readByLine=true;
-	procs.connectCB([&procs](QString msg)
-		{
-			qDebug()<<QString("got:%1").arg(msg);
-			//sleep(1);
-		});
-
-	if(procs.setCommands(tsl)==true)
-		tags=procs.runCommands();//.split('\n',Qt::SkipEmptyParts);
-
-	retstr=procs.runCommandsInShell("ls / /root 2>/tmp/error2.log|tee /tmp/whatis|tac -|tee -a /tmp/what;cd /tmp;ls");
-return;
-	//printf(">>>%s<<<\n",qPrintable(tags));
-	//qDebug().noquote()<<tags.split('\n',Qt::SkipEmptyParts);
-
-	procs.clearCallbacks();
-	//procs.setStdErr(stdErrOption::toFile,"/tmp/error.log");
-	//procs.setStdErr(stdErrOption::output);
-	//procs.setStdErrFileOption(stdErrOption::toFile,"/tmp/error.log");
-	//procs.setStdErrFileOption(stdErrOption::multiToFile,"/tmp/error.log");
-	if(procs.setCommands(QStringList()<<"touch /zzz"<<"ls /root ~"<<"cat - /etc/fstab"<<"sort -u"<<"tac -")==true)
-	//if(procs.setCommands(QStringList()<<"echo -e \"$(stat /tmp)\"")==true)
-		{
-			retstr=procs.runCommands();
-			printf(">>>>>%s<<<<<\n",qPrintable(retstr));
+					if(procs.setCommands(tsl)==true)
+						tags=procs.runCommands();
+				}
+				break;
+			case 5:
+				{
+					qDebug()<<"Running complex piped/redirected commands in shell";
+					retstr=procs.runCommandsInShell("ls / /root 2>/tmp/error2.log|tee /tmp/whatis|tac -|tee -a /tmp/what;cd /tmp;ls");
+					QStringList sl=retstr.split('\n',Qt::SkipEmptyParts);
+					for(const QString &str : sl)
+						qDebug() << str;
+				}
+				break;
+			case 6:
+				{
+					qDebug()<<"Run piped commands with errors going to /tmp/error.log";
+					procs.clearCallbacks();
+					procs.setStdErrFileOption(stdErrOption::toFile,"/tmp/error.log");
+					if(procs.setCommands(QStringList()<<"touch /zzz"<<"ls /root ~"<<"cat - /etc/fstab"<<"sort -u"<<"tac -")==true)
+						{
+							retstr=procs.runCommands();
+							printf("%s\n",qPrintable(retstr));
+						}
+				}
+				break;
+			case 7:
+				{
+					qDebug()<<"Run command with errors going to stderr";
+					procs.setStdErrFileOption(stdErrOption::output);
+					if(procs.setCommands(QStringList()<<"ls / /xcxzczxcz")==true)
+						procs.runCommands();
+				}
+				break;
+			case 8:
+				{
+					qDebug()<<"Run command with errors going to multiple error files\nOp going to file";
+					procs.setStdErrFileOption(stdErrOption::multiToFile,"/tmp/error1.log",QIODeviceBase::Append);
+					procs.setStdOutFileOption("/tmp/log.txt",QIODeviceBase::Append);
+					if(procs.setCommands(QStringList()<<"touch /zzzz"<<"ls ${HOME} $(pwd) / /xcxzczxcz")==true)
+						retstr=procs.runCommands();
+				}
+				break;
 		}
-	qDebug()<<"---------------------------";
-return;
-	procs.setStdErrFileOption(stdErrOption::output);
-	if(procs.setCommands(QStringList()<<"ls / /xcxzczxcz")==true)
-		{
-			retstr=procs.runCommands();
-			printf(">>>>>%s<<<<<\n",qPrintable(retstr));
-		}
-
-	qDebug()<<"++++++++++++++++++++++++++++++++";
-	procs.setStdErrFileOption(stdErrOption::toFile,"/tmp/error1.log",QIODeviceBase::Append);
-	procs.setStdOutFileOption("/tmp/log.txt",QIODeviceBase::Append);
-	if(procs.setCommands(QStringList()<<"ls ${HOME} $(pwd) / /xcxzczxcz")==true)
-		{
-			retstr=procs.runCommands();
-		}
-
-	qDebug()<<"=============================";
-
-	retstr=procs.runCommandsInShell("ls / /root 2>/tmp/error2.log|tee /tmp/whatis|tac -|tee -a /tmp/what");
-	printf("--->>>>>%s<<<<<---\n",qPrintable(retstr));
 }
 
 QMenu* setFileMenu(QMenuBar *menubar)
