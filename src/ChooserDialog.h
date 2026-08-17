@@ -11,19 +11,11 @@ enum class chooserDialogType{saveDialog,loadDialog};
 class chooserDialogClass
 {
 	public:
-		chooserDialogClass(chooserDialogType type,QString savename="",QString startfolder="");
+		chooserDialogClass(chooserDialogType type,QString startfolder="",QString savename="");
 		~chooserDialogClass();
 
 		QDialog				dialogWindow;
-		QString				localWD;
-		QString				selectedFileName;
-		QString				selectedFilePath;
-		QString				realFolderPath;
-		QString				realName;
-		QString				realFilePath;
 		QVector<QString>		multiFileList;
-		bool					fileExists=false;
-		bool					useMulti=false;
 		bool					valid=false;
 
 		void					setShowImagesInList(bool show=false);
@@ -31,40 +23,55 @@ class chooserDialogClass
 		void					addFileTypes(QString types);
 
 	private:
-		QLineEdit			filepathEdit;
-		QComboBox			fileTypes;
+
+//main
+		QString				selectedFolderPath="";
+		QString				currentFolderPath="/";
+		QComboBox			*folderCombo=NULL;
+		QPushButton			*apply=NULL;
+
 		QListView			fileList;
 		QStandardItemModel	*fileListModel;
-
 		QListView			sideList;
 		QStandardItemModel	*sideListModel;
+
+		QLineEdit			filepathEdit;
+		QComboBox			fileTypes;
 
 		QLabel				previewIcon;
 		QLabel				previewMimeType;
 		QLabel				previewSize;
 		QLabel				previewMode;
-		QLabel				previewFileName;
-		QString				saveName;
 
-		bool					showHidden=false;
-		bool					showThumbsInList=false;
-		bool					saveDialog=false;
-		bool					overwriteWarning=true;
-		QString				lastSaveFolder;
-		QString				lastLoadFolder;
-		int					maxRecents=21;
+		bool					useMulti=false;
+
+		chooserDialogType	dialogType=chooserDialogType::loadDialog;
+		void					buildMainGui(void);
+		void					showPreViewData(QString file);
+		void					doChoose(void);
+		void					setFavs(void);
+		void					setExitData(bool valid);
+		void					getFilePermissions(QString filePath);
+		
+//sidlist cbs
 		QString				recentFoldersPath;
 		QString				recentFilesPath;
+		int					maxRecents=21;
 
-		void					buildMainGui(void);
 		void					setSideList(void);
-		void					setFileList(void);
-		QIcon				getFileIcon(QString path);
-		void					selectItem(const QModelIndex &index);
 		void					selectSideItem(const QModelIndex &index);
-		void					showPreViewData(void);
-		void					setFileData(void);
-		void					setFavs(void);
+		void					doubleClickSideList(const QModelIndex &index);
+
+//filelist cbs
+		bool					showHidden=false;
+		bool					showThumbsInList=false;
+		bool					fromRecents=false;
+
+		QIcon				getFileIcon(QString path);
+		void					doubleClickFileList(const QModelIndex &index);
+		void					fileListSelectionChanged(void);
+		void					setSelectedFiles(const QModelIndex &index,bool clear=false);
+		void					setFileList(QString dir,QDir::SortFlags sortas=QDir::Name);
 };
 
 #endif

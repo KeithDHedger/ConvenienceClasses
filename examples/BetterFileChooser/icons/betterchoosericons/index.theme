@@ -1,7 +1,7 @@
 [Icon Theme]
 Name=betterchoosericons
 
-Directories=places,mimetypes
+Directories=places,mimetypes,actions
 
 [places]
 Size=48
@@ -11,4 +11,9 @@ Type=Scalable
 [mimetypes]
 Size=48
 Context=MimeTypes
+Type=Scalable
+
+[actions]
+Size=48
+Context=Actions
 Type=Scalable

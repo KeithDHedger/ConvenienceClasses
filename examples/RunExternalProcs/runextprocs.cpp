@@ -137,6 +137,7 @@ void runProcs(void)
 	msgBox.addButton("errors",QMessageBox::AcceptRole);
 	msgBox.addButton("errors 2",QMessageBox::AcceptRole);
 	msgBox.addButton("errors 3",QMessageBox::AcceptRole);
+	msgBox.addButton(QMessageBox::Close);
 	ret=msgBox.exec();
 
 	switch(ret)
@@ -175,7 +176,7 @@ void runProcs(void)
 					procs.connectCB([&procs](QString msg)
 						{
 							qDebug()<<QString("Read line:%1").arg(msg);
-							usleep(25000);
+							usleep(12500);
 						});
 
 					if(procs.setCommands(tsl)==true)

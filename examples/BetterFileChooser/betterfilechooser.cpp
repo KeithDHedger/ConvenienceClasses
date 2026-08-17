@@ -1,7 +1,7 @@
 #if 0
 
-echo "Broken needs complety redoing ..."
-exit 1
+#echo "Broken needs complety redoing ..."
+#exit 1
 
 if [[ ! "X$USEVALGRIND" = "X" ]];then
 cat>ignorelibleaks<<EOF
@@ -57,7 +57,7 @@ fi
 g++ -g -Wall -I${PWD} -I${PWD}/../../src -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) ${PWD}/../../src/ChooserDialog.cpp -fPIC "$0" -o ./chooser||exit 1
 $VALGRIND ./chooser "$@"
 retval=$?
-#rm ./a.out
+#rm ./chooser
 exit $retval
 
 #endif
@@ -145,22 +145,22 @@ void doOpenFile(void)
 
 void doSaveFile(void)
 {
-	chooserDialogClass	chooser(chooserDialogType::saveDialog,"Untitled");
-	chooser.setShowImagesInList(true);
-
-	for(int j=0;j<fileTypeFilters.size();j++)
-		chooser.addFileTypes(fileTypeFilters.at(j));
-		
-	chooser.dialogWindow.exec();
-	if(chooser.valid==false)
-		{
-			qDebug()<<"Save canceled";
-			return;
-		}
-
-	qDebug()<<"Save File"<<chooser.multiFileList.at(0)<<"exists:"<<QFileInfo::exists(chooser.multiFileList.at(0));
-	if(chooser.multiFileList.at(0).isEmpty()==false)
-		system(qPrintable(QString("touch '%1'").arg(chooser.multiFileList.at(0))));
+//	chooserDialogClass	chooser(chooserDialogType::saveDialog,"Untitled");
+//	chooser.setShowImagesInList(true);
+//
+//	for(int j=0;j<fileTypeFilters.size();j++)
+//		chooser.addFileTypes(fileTypeFilters.at(j));
+//		
+//	chooser.dialogWindow.exec();
+//	if(chooser.valid==false)
+//		{
+//			qDebug()<<"Save canceled";
+//			return;
+//		}
+//
+//	qDebug()<<"Save File"<<chooser.multiFileList.at(0)<<"exists:"<<QFileInfo::exists(chooser.multiFileList.at(0));
+//	if(chooser.multiFileList.at(0).isEmpty()==false)
+//		system(qPrintable(QString("touch '%1'").arg(chooser.multiFileList.at(0))));
 }
 
 void doSelectFolder(void)
@@ -251,9 +251,10 @@ int main(int argc, char **argv)
 	app.setOrganizationDomain("KDHedger");
 	app.setApplicationName(PACKAGE_NAME);
 
-	QIcon::setThemeSearchPaths(QStringList()<<QString("%1/usr/share/icons").arg(getenv("APPDIR"))<<QString("/usr/share/icons")<<QString("%1/.icons").arg(getenv("HOME")) <<QString("%1/icons").arg(realDataDir) );
-	QIcon::setFallbackSearchPaths(QStringList()<<QString("%1/usr/share/icons").arg(getenv("APPDIR"))<<QString("/usr/share/icons")<<QString("%1/.icons").arg(getenv("HOME"))  <<QString("%1/icons").arg(realDataDir));
-QIcon::setThemeName("betterchoosericons");
+	if(QIcon::themeName()=="hicolor")
+		QIcon::setThemeName("betterchoosericons");
+
+	QIcon::setThemeSearchPaths(QStringList()<<QString("%1/icons").arg(realDataDir)<<QIcon::themeSearchPaths());
 
 	te=new QPlainTextEdit(widg);
 	QFile		file(QString("%1/../../LICENSE").arg(getenv("PWD")));
@@ -279,9 +280,9 @@ QIcon::setThemeName("betterchoosericons");
 
 	mainwindow->setMenuBar(menuBar);
 
-//	fileTypeFilters.append("*.cpp;*.c;*.h;*.hpp;*.m;*.mm;*.py;*.go;*.java;*.js;*.rb;*.sh;*.rs;*.tcl;*.pl");
-//	fileTypeFilters.append("*.html;*.xml;*.css;*.php;*.pro;*.in;*.am;*.m4;*.md;*.ac;*.json;*.class;*.sql");
 	fileTypeFilters.append("All Files");
+	fileTypeFilters.append("*.cpp;*.c;*.h;*.hpp;*.m;*.mm;*.py;*.go;*.java;*.js;*.rb;*.sh;*.rs;*.tcl;*.pl");
+	fileTypeFilters.append("*.html;*.xml;*.css;*.php;*.pro;*.in;*.am;*.m4;*.md;*.ac;*.json;*.class;*.sql");
 
 	if(prefs.contains("app/geometry"))
 		mainwindow->restoreGeometry(prefs.value("app/geometry").toByteArray());
