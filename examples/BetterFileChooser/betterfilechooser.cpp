@@ -1,8 +1,5 @@
 #if 0
 
-#echo "Broken needs complety redoing ..."
-#exit 1
-
 if [[ ! "X$USEVALGRIND" = "X" ]];then
 cat>ignorelibleaks<<EOF
 {
@@ -145,39 +142,38 @@ void doOpenFile(void)
 
 void doSaveFile(void)
 {
-//	chooserDialogClass	chooser(chooserDialogType::saveDialog,"Untitled");
-//	chooser.setShowImagesInList(true);
-//
-//	for(int j=0;j<fileTypeFilters.size();j++)
-//		chooser.addFileTypes(fileTypeFilters.at(j));
-//		
-//	chooser.dialogWindow.exec();
-//	if(chooser.valid==false)
-//		{
-//			qDebug()<<"Save canceled";
-//			return;
-//		}
-//
-//	qDebug()<<"Save File"<<chooser.multiFileList.at(0)<<"exists:"<<QFileInfo::exists(chooser.multiFileList.at(0));
-//	if(chooser.multiFileList.at(0).isEmpty()==false)
-//		system(qPrintable(QString("touch '%1'").arg(chooser.multiFileList.at(0))));
+	chooserDialogClass	chooser(chooserDialogType::saveDialog,"test save file");
+	chooser.setShowImagesInList(true);
+
+	for(int j=0;j<fileTypeFilters.size();j++)
+		chooser.addFileTypes(fileTypeFilters.at(j));
+		
+	chooser.dialogWindow.exec();
+	if(chooser.valid==false)
+		{
+			qDebug()<<"Save canceled";
+			return;
+		}
+
+	qDebug()<<"Save File"<<chooser.multiFileList.at(0)<<"exists:"<<QFileInfo::exists(chooser.multiFileList.at(0));
+	if(chooser.multiFileList.at(0).isEmpty()==false)
+		system(qPrintable(QString("touch '%1'").arg(chooser.multiFileList.at(0))));
 }
 
 void doSelectFolder(void)
 {
-//	chooserDialogClass	chooser(chooserDialogType::folderDialog);
-//	//chooser.setMultipleSelect(false);
-//	//chooser.setShowImagesInList(true);
-//		
-//	chooser.dialogWindow.exec();
-//	if(chooser.valid==false)
-//		{
-//			qDebug()<<"Select canceled";
-//			return;
-//		}
-//
-//	//qDebug()<<"Selected Folder"<<chooser.selectedFolder<<"exists:"<<QFileInfo::exists(chooser.selectedFolder);
-//	qDebug()<<"Selected Folder"<<chooser.multiFileList.at(0)<<"exists:"<<QFileInfo::exists(chooser.multiFileList.at(0));
+	chooserDialogClass	chooser(chooserDialogType::folderDialog);
+	chooser.setMultipleSelect(false);
+	chooser.setShowImagesInList(true);
+		
+	chooser.dialogWindow.exec();
+	if(chooser.valid==false)
+		{
+			qDebug()<<"Select canceled";
+			return;
+		}
+
+	qDebug()<<"Selected Folder"<<chooser.multiFileList.at(0)<<"exists:"<<QFileInfo::exists(chooser.multiFileList.at(0));
 }
 
 QMenu* setFileMenu(QMenuBar *menubar)

@@ -6,12 +6,12 @@
 
 #define MAXIMAGESIZETOTHUMB 2000000
 
-enum class chooserDialogType{saveDialog,loadDialog};
+enum class chooserDialogType{saveDialog,loadDialog,folderDialog};
 
 class chooserDialogClass
 {
 	public:
-		chooserDialogClass(chooserDialogType type,QString startfolder="",QString savename="");
+		chooserDialogClass(chooserDialogType type,QString savename="Untitled",QString startfolder="");
 		~chooserDialogClass();
 
 		QDialog				dialogWindow;
@@ -52,7 +52,8 @@ class chooserDialogClass
 		void					setFavs(void);
 		void					setExitData(bool valid);
 		void					getFilePermissions(QString filePath);
-		
+		void					fileEntryTextEdited(QString text);
+
 //sidlist cbs
 		QString				recentFoldersPath;
 		QString				recentFilesPath;
