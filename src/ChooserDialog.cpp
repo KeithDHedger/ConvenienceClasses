@@ -295,11 +295,12 @@ QIcon chooserDialogClass::getFileIcon(QString path)
 					if((QFileInfo(path).size()<MAXIMAGESIZETOTHUMB) && (this->showThumbsInList==true))
 						icon=QIcon(path);
 					else
-						icon=QIcon::fromTheme(type.iconName(),QIcon::fromTheme("image"));
+						icon=QIcon::fromTheme(type.iconName(),QIcon::fromTheme("image-x-generic"));
 				}
 			else
 				{
 					icon=QIcon::fromTheme(type.iconName());
+					qDebug()<<type.iconName();
 				}
 		}
 
@@ -730,7 +731,7 @@ void chooserDialogClass::selectSideItem(const QModelIndex &index)
 								if(str.isEmpty()==true)
 									return;
 								
-								icon=QIcon::fromTheme("folder");
+								icon=QIcon::fromTheme("user-bookmarks");
 								pixmap=icon.pixmap(QSize(128,128)).scaledToWidth(128,Qt::SmoothTransformation);
 								this->previewIcon.setPixmap(pixmap);
 								d=QDir(str,nullptr,QDir::Name,QDir::NoDotAndDotDot|QDir::AllDirs|QDir::System|QDir::Hidden).count();
