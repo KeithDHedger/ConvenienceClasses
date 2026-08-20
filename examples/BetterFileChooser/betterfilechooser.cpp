@@ -277,8 +277,10 @@ int main(int argc, char **argv)
 	mainwindow->setMenuBar(menuBar);
 
 	fileTypeFilters.append("All Files");
-	fileTypeFilters.append("*.cpp;*.c;*.h;*.hpp;*.m;*.mm;*.py;*.go;*.java;*.js;*.rb;*.sh;*.rs;*.tcl;*.pl");
-	fileTypeFilters.append("*.html;*.xml;*.css;*.php;*.pro;*.in;*.am;*.m4;*.md;*.ac;*.json;*.class;*.sql");
+	fileTypeFilters.append("Code(    *.cpp *.c *.h *.hpp *.m *.mm *.py *.go *.java *.js *.rb *.sh *.rs *.tcl *.pl   )");
+	fileTypeFilters.append("HTML files  (   *.html *.xml *.css *.php *.pro *.in *.am *.m4 *.md *.ac *.json *.class *.sql  )");
+	fileTypeFilters.append("Image files( *.png *.jpg *.jpeg *.bmp *.gif *.svg *.tiff )");
+	fileTypeFilters.append("(*)");
 
 	if(prefs.contains("app/geometry"))
 		mainwindow->restoreGeometry(prefs.value("app/geometry").toByteArray());

@@ -156,6 +156,7 @@ void chooserDialogClass::buildMainGui(void)
 			this->fileEntryTextEdited(text);
 		});
 
+	this->fileTypes.setMinimumContentsLength(64);
 	controlsvlayout->addWidget(&this->fileTypes);
 	QObject::connect(&this->fileTypes,&QComboBox::currentTextChanged,[this](const QString &text)
 		{
@@ -202,7 +203,7 @@ void chooserDialogClass::buildMainGui(void)
 					if(dirp.mkdir(text)==true)
 						this->setFileList(this->currentFolderPath+"/"+text);
 					else
-						QMessageBox::critical(&this->dialogWindow,"Failed","Can't create folder ...");//TODO//Dont like this
+						QMessageBox::critical(&this->dialogWindow,"Failed","Can't create folder ...");
 				}
 		});
 
@@ -300,7 +301,6 @@ QIcon chooserDialogClass::getFileIcon(QString path)
 			else
 				{
 					icon=QIcon::fromTheme(type.iconName());
-					qDebug()<<type.iconName();
 				}
 		}
 
@@ -507,7 +507,7 @@ void chooserDialogClass::setExitData(bool valid)
 
 void chooserDialogClass::addFileTypes(QString types)
 {
-	this->fileTypes.addItem(types);
+	this->fileTypes.addItem(types.simplified());
 }
 
 void chooserDialogClass::setSelectedFiles(const QModelIndex &index,bool clear)
@@ -814,7 +814,11 @@ void chooserDialogClass::setFileList(QString dir,QDir::SortFlags sortas)
 	if(this->fileTypes.currentText()=="All Files")
 		namefilters.clear();
 	else
-		namefilters=this->fileTypes.currentText().split(';');
+		{
+			QString filts=this->fileTypes.currentText();
+			filts=filts.replace(QRegularExpression("^.*\\((.*)\\).*"),"\\1");
+			namefilters=filts.simplified().split(" ");
+		}
 
 	if(this->fromRecents==true)
 		dfilts|=QDir::NoDotDot;
