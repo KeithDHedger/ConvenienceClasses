@@ -86,6 +86,7 @@ void makeCompleterStringList(void)
 
 	lestr=new QT_lineEditCompleterClass("",mainwindow);
 	lestr->setPlaceholderText("Type some function/member strings eg: build)");
+	lestr->useInternaleSC=true;
 
 	lestr->setCompleteType(STRINGCOMPLETE);
 	QObject::connect(lestr,&QLineEdit::editingFinished,[]()

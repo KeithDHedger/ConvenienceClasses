@@ -23,7 +23,6 @@ class chooserDialogClass
 		void					addFileTypes(QString types);
 
 	private:
-
 //main
 		QString				selectedFolderPath="";
 		QString				currentFolderPath="/";
@@ -35,7 +34,10 @@ class chooserDialogClass
 		QListView			sideList;
 		QStandardItemModel	*sideListModel;
 
-		QLineEdit			filepathEdit;
+		QT_lineEditCompleterClass	*filepathEdit;
+		QShortcut			*pathActivateKey;
+		QShortcut			*pathCancelKey;
+
 		QComboBox			fileTypes;
 
 		QLabel				previewIcon;

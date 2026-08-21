@@ -5,3 +5,4 @@ ignorelibleaks
 HOLD
 qt_runexternalproc
 chooser
+lineeditcompleter

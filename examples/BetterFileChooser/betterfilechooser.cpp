@@ -51,7 +51,7 @@ EOF
 	esac
 fi
 
-g++ -g -Wall -I${PWD} -I${PWD}/../../src -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) ${PWD}/../../src/ChooserDialog.cpp -fPIC "$0" -o ./chooser||exit 1
+g++ -g -Wall -I${PWD} -I${PWD}/../../src -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) ${PWD}/../../src/ChooserDialog.cpp ${PWD}/../../src/QT_lineEditCompleter.cpp -fPIC "$0" -o ./chooser||exit 1
 $VALGRIND ./chooser "$@"
 retval=$?
 #rm ./chooser

@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include "config.h"
 
+#include "QT_lineEditCompleter.h"
 #include "ChooserDialog.h"
 
 #endif
