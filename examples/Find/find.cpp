@@ -51,7 +51,7 @@ EOF
 	esac
 fi
 
-g++ -g -Wall -Wunreachable-code  -I${PWD} -I${PWD}/../../src -DUSEPLAIN -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) ${PWD}/../../src/QT_FindClass.cpp -fPIC "$0"||exit 1
+g++ ${PWD}/../../src/QT_FindClass.cpp "$0" -g -Wall -Wunreachable-code  -I${PWD} -I${PWD}/../../src -DUSEPLAIN -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) -fPIC||exit 1
 $VALGRIND ./a.out "$@"
 retval=$?
 #rm ./a.out

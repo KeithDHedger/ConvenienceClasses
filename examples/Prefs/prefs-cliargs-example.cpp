@@ -50,7 +50,7 @@ EOF
 	esac
 fi
 
-g++ -g -Wall -I${PWD} -I${PWD}/../../src -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) -fPIC ${PWD}/../../src/prefsClass.cpp "$0"||exit 1
+g++ ${PWD}/../../src/prefsClass.cpp "$0" -g -Wall -I${PWD} -I${PWD}/../../src -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) -fPIC||exit 1
 $VALGRIND ./a.out "$@"
 retval=$?
 #rm ./a.out

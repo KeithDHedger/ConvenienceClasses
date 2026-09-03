@@ -51,7 +51,7 @@ EOF
 	esac
 fi
 
-g++ -Wall -g -I${PWD} -I${PWD}/../../src -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) -fPIC ${PWD}/../../src/QT_AboutBox.cpp "$0"||exit 1
+g++ ${PWD}/../../src/QT_AboutBox.cpp "$0" -Wall -g -I${PWD} -I${PWD}/../../src -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) -fPIC ||exit 1
 $VALGRIND ./a.out "$@"
 retval=$?
 #rm ./a.out
@@ -98,25 +98,6 @@ QMenu* setHelpMenu(QMenuBar *menubar)
 				{
 					case ABOUTITEM:
 						{
-						#if 0
-							AboutBoxClass	*about=new AboutBoxClass(qApp->activeWindow(),QString("%1/pixmaps/About.png").arg(getenv("PWD")));
-							QFile			file(QString("%1/docs/gpl-3.0.txt").arg(DATADIR));
-							if(file.open(QIODevice::ReadOnly | QIODevice::Text))
-								{
-									QTextStream in(&file);
-									about->licence=in.readAll();
-									file.close();
-								}
-							about->credits=credits;
-							about->setHomepage("https://keithdhedger.github.io/LFSDesktopProject/","Test LFS Page");
-							about->setBodyText("A test about box,");
-							about->showAboutQtButton(true);
-							about->showLicenceButton(true);
-							about->showCreditsButton(true);
-
-							about->runAbout();
-							delete about;
-						#else
 							AboutBoxClass	about(qApp->activeWindow(),QString("%1/pixmaps/About.png").arg(getenv("PWD")));
 							QFile			file(QString("%1/docs/gpl-3.0.txt").arg(DATADIR));
 							if(file.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -133,7 +114,6 @@ QMenu* setHelpMenu(QMenuBar *menubar)
 							about.showCreditsButton(true);
 
 							about.runAbout();
-						#endif
 						}
 						break;
 					case ABOUTQTITEM:
@@ -141,10 +121,7 @@ QMenu* setHelpMenu(QMenuBar *menubar)
 						break;
 					case HELPITEM:
 						{
-							AboutBoxClass	*about=new AboutBoxClass(qApp->activeWindow());
-
-							about->showHelp(QString("%1/docs/help/help.html").arg(DATADIR));
-
+							AboutBoxClass::showHelp(QString("%1/docs/help/help.html").arg(DATADIR));
 						}
 						break;
 				}

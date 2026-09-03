@@ -51,7 +51,7 @@ EOF
 	esac
 fi
 
-g++ -g -Wall -I${PWD} -I${PWD}/../../src -DUSEPLAIN  -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) ${PWD}/../../src/QT_SpellCheck.cpp -fPIC -laspell "$0"||exit 1
+g++ ${PWD}/../../src/QT_SpellCheck.cpp "$0" -g -Wall -I${PWD} -I${PWD}/../../src -DUSEPLAIN  -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) -fPIC -laspell||exit 1
 $VALGRIND ./a.out "$@"
 retval=$?
 #rm ./a.out

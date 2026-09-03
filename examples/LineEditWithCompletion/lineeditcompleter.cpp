@@ -51,7 +51,7 @@ EOF
 	esac
 fi
 
-g++ -g -Wall -I${PWD} -I${PWD}/../../src -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) ${PWD}/../../src/QT_lineEditCompleter.cpp -fPIC "$0" -o ./lineeditcompleter||exit 1
+g++ ${PWD}/../../src/QT_lineEditCompleter.cpp "$0" -g -Wall -I${PWD} -I${PWD}/../../src -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) -fPIC -o ./lineeditcompleter||exit 1
 $VALGRIND ./lineeditcompleter "$@"
 retval=$?
 #rm ./lineeditcompleter

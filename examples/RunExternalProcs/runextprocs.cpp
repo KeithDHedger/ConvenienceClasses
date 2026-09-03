@@ -59,7 +59,7 @@ EOF
 	esac
 fi
 
-g++ -g -Wall -I${PWD} -I${PWD}/../../src -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) ${PWD}/../../src/QT_RunExternalProc.cpp -fPIC "$0" -o ./qt_runexternalproc||exit 1
+g++ ${PWD}/../../src/QT_RunExternalProc.cpp "$0" -g -Wall -I${PWD} -I${PWD}/../../src -DDATADIR="\"${PWD}\"" $(pkg-config --cflags --libs Qt6Core Qt6Widgets) -fPIC -o ./qt_runexternalproc||exit 1
 $VALGRIND ./qt_runexternalproc "$@"
 retval=$?
 #rm ./qt_runexternalproc

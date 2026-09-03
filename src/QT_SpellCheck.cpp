@@ -129,7 +129,7 @@ void QT_SpellCheckClass::doSpellCheckDoc(void)
 	unsigned int						goodwordlen;
 	int								buffdiff=0;
 
-	this->changed=false
+	this->changed=false;
 	/* Set up the document checker */
 	if((this->spellChecker==NULL) || (this->te==NULL))
 		return;
