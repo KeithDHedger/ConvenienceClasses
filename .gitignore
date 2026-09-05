@@ -6,3 +6,4 @@ HOLD
 qt_runexternalproc
 chooser
 lineeditcompleter
+callbacks
