@@ -14,6 +14,7 @@ AboutBoxClass::~AboutBoxClass()
 void AboutBoxClass::killCreditsBox(void)
 {
 	this->creditsDialog->close();
+	this->aboutDialog->activateWindow();
 }
 
 void AboutBoxClass::showCredits(void)
@@ -67,6 +68,7 @@ void AboutBoxClass::showCredits(void)
 void AboutBoxClass::killLicenceBox(void)
 {
 	this->licenceDialog->close();
+	this->aboutDialog->activateWindow();
 }
 
 void AboutBoxClass::killAboutBox(void)
@@ -210,15 +212,17 @@ AboutBoxClass::AboutBoxClass(QWidget *window,QString pixpath)
 	QObject::connect(this->aboutQtButton,&QPushButton::clicked,[this]()
 		{
 			qApp->aboutQt();
+			this->aboutDialog->activateWindow();
 		});
 	hlayout->addWidget(this->aboutQtButton);
 
 //close
 	button=new QPushButton("&Close");
 	button->setIcon(QIcon::fromTheme("window-close"));
-	QObject::connect(button,&QPushButton::clicked,[this]()
+	QObject::connect(button,&QPushButton::clicked,[this,window]()
 		{
 			this->killAboutBox();
+			window->activateWindow();
 		});
 	hlayout->addWidget(button);
 

@@ -22,6 +22,7 @@
 #define _CALLBACKCLASS_
 
 #include <QtWidgets>
+#include <unistd.h>
 
 //#include <functional>
 
@@ -33,13 +34,24 @@ class CallbackClassClass
 		CallbackClassClass();
 		~CallbackClassClass();
 
-		void					connectCB(CC_Callback cb);
-		void					clearCallbacks(void);
-		void					triggerCallbacks(QString txt);
-		void					triggerCallback(int number,QString txt);
+		void						connectCB(CC_Callback cb);
+		void						clearCallbacks(void);
+		void						triggerCallbacks(QString txt);
+		void						triggerCallback(int number,QString txt);
+
+//test internal
+		int						cnt=0;
+		void						connectInternalCB(CC_Callback cb);
+		void						testClassCB(void);
+
+//useing qmap with hash
+		void						connectCBByName(QStringView name,CC_Callback cb);
+		void						triggerCallbackByName(QStringView name,QString txt);
 
 	private:
-		QVector<CC_Callback>	callbacks;
+		CC_Callback				ccCB=nullptr;
+		QVector<CC_Callback>		callbacks;
+		QMap<int,CC_Callback>	cbByName;
 
 };
 

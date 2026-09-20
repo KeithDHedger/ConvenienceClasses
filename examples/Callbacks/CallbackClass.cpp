@@ -36,6 +36,8 @@ void CallbackClassClass::connectCB(CC_Callback cb)
 void CallbackClassClass::clearCallbacks(void)
 {
 	this->callbacks.clear();
+	this->cbByName.clear();
+	this->ccCB=nullptr;
 }
 
 void CallbackClassClass::triggerCallbacks(QString txt)
@@ -46,5 +48,35 @@ void CallbackClassClass::triggerCallbacks(QString txt)
 
 void CallbackClassClass::triggerCallback(int number,QString txt)
 {
-	this->callbacks.at(number)(txt);
+	if(this->callbacks.size()>number)
+		this->callbacks.at(number)(txt);
+}
+
+void CallbackClassClass::testClassCB(void)
+{
+	if(this->ccCB==nullptr)
+		return;
+
+	for(int j=0;j<10;j++)
+		{
+			this->ccCB(QString(">>%1<<").arg(j));
+			cnt+=10;
+			sleep(1);
+		}
+}
+
+void CallbackClassClass::connectInternalCB(CC_Callback cb)
+{
+	this->ccCB=cb;
+}
+
+void CallbackClassClass::connectCBByName(QStringView name,CC_Callback cb)
+{
+	this->cbByName[qHash(name)]=cb;
+}
+
+void CallbackClassClass::triggerCallbackByName(QStringView name,QString txt)
+{
+	if(this->cbByName.contains(qHash(name)))
+		this->cbByName[qHash(name)](txt);
 }

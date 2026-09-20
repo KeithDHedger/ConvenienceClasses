@@ -70,6 +70,8 @@ int main(int argc, char **argv)
 	CallbackClassClass	cc;
 	int					cnt=0;
 
+	cc.clearCallbacks();
+
 	cc.connectCB([&cc](QString msg)
 		{
 			qDebug()<<QString("got 1:%1").arg(msg);
@@ -91,5 +93,31 @@ int main(int argc, char **argv)
 			sleep(1);
 		}
 	cc.triggerCallbacks("One last time");
+	cc.triggerCallback(1,"1 >>>>>from cc.ccCB=([&cc](QString msg)");
+	cc.triggerCallback(20,"2 ======from cc.ccCB=([&cc](QString msg)");//no call back set
+
+	cc.connectInternalCB([&cc](QString msg)
+	//cc.ccCB=([&cc](QString msg)
+		{
+			qDebug()<<QString("got 3:%1").arg(msg)<<cc.cnt;
+			cc.triggerCallback(0,"from cc.ccCB=([&cc](QString msg)");
+		});
+
+
+	cc.testClassCB();
+
+	cc.connectCBByName(QStringLiteral("testing"),[&cc](QString msg)
+		{
+			qDebug()<<QString("got 4:%1").arg(msg)<<cc.cnt;
+		});
+	//cc.connectCBByName(QString::fromUtf8("testing2"),[&cc](QString msg)
+	cc.connectCBByName(QStringLiteral("testing2"),[&cc](QString msg)
+		{
+			qDebug()<<QString("got 4:%1").arg(msg)<<cc.cnt;
+		});
+
+	cc.triggerCallbackByName(QStringLiteral("testing"),"callback name=testing");
+	cc.triggerCallbackByName(QStringLiteral("testing2"),"callback name=testing2");
+	cc.triggerCallbackByName(QStringLiteral("testing3"),"callback name=testing3");//no such cb
 	return 0;
 }
