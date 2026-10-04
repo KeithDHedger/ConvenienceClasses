@@ -74,7 +74,10 @@ QStringList QT_lineEditCompleterClass::completeForPrefix(QString typed)
 		return(QStringList());
 
 	filterPart=part;
-	entries=searchDir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries,QDir::Name);
+	if(this->onlyFolders==false)
+		entries=searchDir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries,QDir::Name);
+	else
+		entries=searchDir.entryInfoList(QDir::NoDotAndDotDot | QDir::Dirs,QDir::Name);
 
 	for(const QFileInfo &fi : entries)
 		{

@@ -122,7 +122,17 @@ void makeCompleterFolderList(QString fold)
 {
 	le=new QT_lineEditCompleterClass("",mainwindow);
 	le->setPlaceholderText("Type a path under /home (e.g. user/Do...)");
+	le->onlyFolders=true;
+	le->setCompleteType(FOLDERCOMPLETE);
+	le->setRootFolder(fold);
+	le->setUpCompleter();
+}
 
+void makeCompleterFilesAndFolderList(QString fold)
+{
+	le=new QT_lineEditCompleterClass("",mainwindow);
+	le->setPlaceholderText("Type a path under /home (e.g. user/Do...)");
+	le->onlyFolders=false;
 	le->setCompleteType(FOLDERCOMPLETE);
 	le->setRootFolder(fold);
 	le->setUpCompleter();
@@ -254,6 +264,9 @@ int main(int argc, char **argv)
 	layout->addWidget(lestr);
 
 	makeCompleterFolderList(argv[1]);
+	layout->addWidget(le);
+
+	makeCompleterFilesAndFolderList(argv[1]);
 	layout->addWidget(le);
 
 	layout->setAlignment(Qt::AlignCenter);

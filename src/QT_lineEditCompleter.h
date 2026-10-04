@@ -13,6 +13,7 @@ class QT_lineEditCompleterClass: public QLineEdit
 		~QT_lineEditCompleterClass();
 
 		bool				useInternaleSC=true;
+		bool				onlyFolders=false;
 
 		void				setCompleteType(int type);
 		void				setUpCompleter(QStringList sl=QStringList());

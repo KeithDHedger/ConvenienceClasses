@@ -165,7 +165,7 @@ void doSelectFolder(void)
 	chooserDialogClass	chooser(chooserDialogType::folderDialog);
 	chooser.setMultipleSelect(false);
 	chooser.setShowImagesInList(true);
-		
+
 	chooser.dialogWindow.exec();
 	if(chooser.valid==false)
 		{
